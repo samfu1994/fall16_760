@@ -4,6 +4,8 @@ import csv
 import Queue
 import sys
 import copy
+import random
+import pydot
 
 train_data = [];
 test_data = [];
@@ -14,11 +16,16 @@ instanceNum = 0;
 nominal = {}
 stopThreshold = 2;
 trainSetSize = 1;
+originAttributes = 0
 thresholdMap = []
 MAX_INIT = -2147483648
 MIN_INIT = 2147483647
 median = 1
 STOPMEG = 0
+inverseMap = []
+graph = pydot.Dot(graph_type='graph')
+
+
 def getPrediction(node):
 	p = 0
 	n = 0
@@ -29,6 +36,7 @@ def getPrediction(node):
 		else:
 			p += 1
 	if n > p:
+
 		return 0
 	elif n < p:
 		return 1
@@ -37,7 +45,7 @@ def getPrediction(node):
 
 
 class node:
-	def __init__(self, visited, currentSet, parent):
+	def __init__(self, visited, currentSet, parent, myGraph):
 		print (" ")
 		print ("size " + str(len(currentSet)))
 		self.isLeaf = 0
@@ -49,7 +57,7 @@ class node:
 		self.parent = parent
 		self.currentSet = currentSet
 		self.child = []
-		
+		self.graph = myGraph
 
 		if self.judgeStop(visited[:], currentSet):
 			self.isLeaf = 1
@@ -70,17 +78,36 @@ class node:
 		else:
 			self.isNominal = 0
 
+		myGraph[originAttributes[self.index]] = {}
 
 		self.visited.append(self.index);
 
 		if not self.isNominal:
+			myGraph[originAttributes[self.index]]["<=" + str(self.threshold)] = {}
+			c1 = myGraph[originAttributes[self.index]]["<=" + str(self.threshold)]
+			myGraph[originAttributes[self.index]][">" + str(self.threshold)] = {}
+			c2 = myGraph[originAttributes[self.index]][">" + str(self.threshold)] 
 			[left, right] = self.getChild(currentSet, self.index, self.threshold)
-			self.child.append(node(self.visited[:], left, self))
-			self.child.append(node(self.visited[:], right, self))
+			self.child.append(node(self.visited[:], left, self, c1))
+			self.child.append(node(self.visited[:], right, self, c2))
+			if self.child[0].isLeaf:
+				myGraph[originAttributes[self.index]]["<=" + str(self.threshold)] = inverseMap[self.child[0].prediction]
+			if self.child[1].isLeaf:
+				myGraph[originAttributes[self.index]][">" + str(self.threshold)] = inverseMap[self.child[0].prediction]
+			# self.child.append(node(self.visited[:], left, self, myGraph[originAttributes[self.index]]))
+			# self.child.append(node(self.visited[:], right, self, myGraph[originAttributes[self.index]]))
 		else:
 			tmp_child = self.getChild(currentSet, self.index, self.threshold)
+			count = 0
 			for eachChild in tmp_child:
-				self.child.append(node(self.visited[:], eachChild, self))
+				# if eachChild == []:
+				# 	continue
+				myGraph[originAttributes[self.index]][nominal[self.index][count]] = {}
+				self.child.append(node(self.visited[:], eachChild, self, myGraph[originAttributes[self.index]][nominal[self.index][count]]))
+				if self.child[count].isLeaf:
+					myGraph[originAttributes[self.index]][nominal[self.index][count]] = inverseMap[self.child[0].prediction]
+				count += 1
+
 		return
 
 	def predict(self, instance):
@@ -323,10 +350,36 @@ def check(q, originAttributes):
 	print "      " + s
 	check(qq, originAttributes)
 
+
+def draw(parent_name, child_name):
+    edge = pydot.Edge(parent_name, child_name)
+    graph.add_edge(edge)
+
+def visit(node, visited, parent=None ):
+    for k,v in node.iteritems():
+    	cur = random.randint(1, 1000)
+    	while not visited[cur]:
+    		cur = random.randint(1, 1000)
+    		visited[cur] = 1
+    	k = str(cur) + "_" + k
+        if isinstance(v, dict):
+            # We start wth the root node whose parent is None
+            # we don't want to graph the None node
+            if parent:
+                draw(parent, k)
+            visit(v, visited, k)
+        else:
+        	draw(parent, k)
+        	cur = random.randint(1, 1000)
+	    	while visited[cur]:
+	    		cur = random.randint(1, 1000)
+        	draw(k, str(cur) + "_" + v)
+
+
 def main():
 	#dt-learn.py 
 	global train_data, test_data, attributeNum, instanceNum, nominal, label, thresholdMap, thresholdNum
-	global trainSetSize, stopThreshold
+	global trainSetSize, stopThreshold, originAttributes, inverseMap
 	argv = sys.argv
 	argvNum = len(argv)
 	if argvNum != 4:
@@ -342,7 +395,9 @@ def main():
 
 	# train_data = arff.load(open('data/heart_train.arff'))
 	# test_data = arff.load(open('data/heart_test.arff'))
-	originAttributes = copy.deepcopy(train_data["attributes"])
+	originAttributes = []
+	for ele in train_data["attributes"]:
+		originAttributes.append(ele[0])
 	attributeNum = len(train_data["attributes"]) - 1
 	if attributeNum < 0:
 		return
@@ -353,8 +408,10 @@ def main():
 	#nominal stores the values of each features
 	count = 0
 	cur_row = train_data["data"][0]
+	name2index = {}
 	for i in range(attributeNum):
 		ele = cur_row[i]
+		name2index[train_data["attributes"][count][0]] = count
 		if not type(ele) == unicode:
 			nominal[count] = "NUMERIC"
 		else:
@@ -376,9 +433,11 @@ def main():
 	count = 0
 
 	#map label to 0 and 1
+	inverseMap = [0, 0]
 	for ele in train_data["data"]:
 		if ele[attributeNum] not in map_label:
 			map_label[ele[attributeNum]] = count
+			inverseMap[count] = ele[attributeNum]
 			count += 1
 		label.append(map_label[ele[attributeNum]])
 	thresholdNum = [0 for i in range(attributeNum)]
@@ -393,13 +452,19 @@ def main():
 
 	train_data = train_data["data"]
 	test_data = test_data["data"]
-	root = node(visited, currentSet, 0)
+
+	myGraph = {}
+	root = node(visited, currentSet, 0, myGraph)
 
 	print ("-------------------------------------------------------------------------------------------")
 
-	q = Queue.Queue()
-	q.put(root)
-	check(q, originAttributes)
+	# q = Queue.Queue()
+	# q.put(root)
+	# check(q, originAttributes)
+	print myGraph
+	visited = [0 for i in range(1000)]
+	visit(myGraph, visited)
+	graph.write_png("ID3_" + train_data_name+".png")
 
 	# train_label = []
 	# predict_label = []
@@ -433,6 +498,7 @@ def main():
 		print str(predict_label[i]) +"      "  + str(test_label[i])
 	# correct += 0.0
 	print str(correct) +"      "  + str(test_num)
+
 
 
 if __name__ == "__main__":

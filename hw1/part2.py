@@ -20,7 +20,7 @@ thresholdMap = []
 MAX_INIT = -2147483648
 MIN_INIT = 2147483647
 median = 1
-STOPMEG = 1
+STOPMEG = 0
 def getPrediction(node):
 	p = 0
 	n = 0
@@ -325,14 +325,14 @@ def check(q):
 		s += "    "
 		for i in range(l):
 			qq.put(tmp.child[i])
-	print "      " + s
+	# print "      " + s
 	check(qq)
 def func(local_train_data, local_test_data, trainSetSize):
 	global train_data, test_data, label, stopThreshold , attributeNum, instanceNum, nominal, label, thresholdMap, thresholdNum
 	accuracy = []
 	copy_train_data = copy.deepcopy(local_train_data)
 	copy_test_data = copy.deepcopy(local_test_data)
-	print len(copy_train_data["data"])
+	# print len(copy_train_data["data"])
 	for train_time in range(10):
 		train_data = copy.deepcopy(copy_train_data)
 		test_data = copy.deepcopy(copy_test_data)
@@ -407,10 +407,10 @@ def func(local_train_data, local_test_data, trainSetSize):
 		instanceNum = len(train_data)
 		currentSet = [i for i in range(instanceNum)]
 
-		print "current " + str(len(currentSet))
+		# print "current " + str(len(currentSet))
 		root = node(visited, currentSet, 0)
 
-		print ("-------------------------------------------------------------------------------------------")
+		# print ("-------------------------------------------------------------------------------------------")
 
 		q = Queue.Queue()
 		q.put(root)
@@ -441,8 +441,6 @@ def func(local_train_data, local_test_data, trainSetSize):
 	avgAccuracy = sumAccuracy / len(accuracy)
 	minAccuracy = min(accuracy)
 	maxAccuracy = max(accuracy)
-	print "accuracy:"
-	print sumAccuracy
 	return [avgAccuracy, minAccuracy, maxAccuracy]
 
 def main():
