@@ -7,10 +7,12 @@ import Queue
 train_data = [];
 test_data = [];
 label =[];
+thresholdNum = []
 attributeNum = 0;
 instanceNum = 0;
 nominal = {}
 stopThreshold = 2;
+thresholdMap ={}
 MAX_INIT = -2147483648
 MIN_INIT = 2147483647
 median = 1
@@ -44,22 +46,27 @@ class node:
 		self.parent = parent
 		self.currentSet = currentSet
 		self.child = []
+		
+
 		if self.judgeStop(visited[:], currentSet):
 			self.isLeaf = 1
 			self.prediction = getPrediction(self)
 			return
 		gain = self.inforgain(visited[:], currentSet)
-
+		print "gain is " + str(gain)
 		#if no information gain, then return
 		if gain <= 0:
+			print "no more information gain in any node"
 			self.isLeaf = 1
 			self.prediction = getPrediction(self)
 			return 
+		
 		if nominal[self.index] != "NUMERIC":
-			# nominal
+					# nominal
 			self.isNominal = 1
 		else:
 			self.isNominal = 0
+
 
 		self.visited.append(self.index);
 
@@ -95,47 +102,55 @@ class node:
 					left.append(i)
 			return [left, right]
 		else:
-			return 
+			#let thresholdMap be a dict, nominal -> number
+			childList = [[] for i in range(thresholdNum[self.index])]
+			for i in currentSet:
+				feature_belong_class = thresholdMap[index][rain_data[i][index]]
+				childList[feature_belong_class].append(i)
+			
 	def inforgain(self, visited, currentSet):
-		max_val = MAX_INIT
-		index = -1
-		for attribute_index in range(attributeNum):
-			if visited.count(attribute_index) != 0:
-				continue
-			if nominal[attribute_index] == "NUMERIC":
-				vec = self.helper_numeric(attribute_index, currentSet[:])
-				val = vec[0]
-				mid = vec[1]
+			max_val = MAX_INIT
+			index = -1
+			for attribute_index in range(attributeNum):
+				if visited.count(attribute_index) != 0:
+					continue
+				if nominal[attribute_index] == "NUMERIC":
+					vec = self.helper_numeric(attribute_index, currentSet[:])
+					val = vec[0]
+					mid = vec[1]
+				else:
+					val = self.helper_nominal(attribute_index, currentSet[:])
+				# print "		finish attribute " + str(attribute_index)
+				#val is negative
+				print "    " + str(attribute_index)
+				print "            " + str(val)
+				if val > max_val:
+					max_val = val
+					index = attribute_index
+			#calculate self entropy to get the information gain by minus the entropy of child
+			p = 0
+			n = 0
+			for i in currentSet:
+				if label[i] == 1:
+					p += 1
+				else:
+					n += 1
+			pn = p + n + 0.0
+			if p == pn or n == pn:
+				parent_entropy = 0
 			else:
-				val = self.helper_nominal(attribute_index, currentSet[:])
-			# print "		finish attribute " + str(attribute_index)
-			#val is negative
-			if val > max_val:
-				max_val = val
-				index = attribute_index
+				parent_entropy = -(p / pn * math.log(p / pn)) - (n / pn * math.log(n / pn))
 
-		p = 0
-		n = 0
-		for i in currentSet:
-			if label[i] == 1:
-				p += 1
-			else:
-				n += 1
-		pn = p + n + 0.0
-		if p == pn or n == pn:
-			parent_entropy = 0
-		else:
-			parent_entropy = -(p / pn * math.log(p / pn)) - (n / pn * math.log(n / pn))
-		gain = parent_entropy + max_val
-		if gain <= 0:
+			gain = parent_entropy + max_val
+			if gain <= 0:
+				return gain
+
+			visited.append(index)
+			print ("select  " + str(index) )
+			print ("threshold : " + str(mid))
+			self.index = index
+			self.threshold = mid
 			return gain
-
-		visited.append(index)
-		print ("select  " + str(index) )
-		print ("threshold : " + str(mid))
-		self.index = index
-		self.threshold = mid
-		return gain
 	
 
 
@@ -234,8 +249,50 @@ class node:
 		# 		max_entropy = max(max_entropy, self.numeric_info(vec, mid, currentSet) )
 
 		return [max_entropy, mid]
+
+	def getEachEntropy(self, index, row):
+		p = 0
+		n = 0
+		for ele in row:
+			if label[ele] == 0:
+				n += 1
+			else:
+				p += 1
+		l = len(row)
+		if p == l or n == l:
+			return 0
+		else:
+			l += 0.0
+			t1 = p / l
+			t2 = n / l
+			return t1 * math.log(t1) + t2 * math.log(t2)
+
+	def nominal_info(self, vec, index, currentSet):
+		acc = [[] for i in range( len(nominal[index]) )]
+		count = 0
+		l = len(vec)
+		for count in range(l):
+			# print "map is    "
+			# print "          " + str(thresholdMap[index])
+			cur = thresholdMap[index][vec[count]]
+			acc[cur].append(currentSet[count])
+		
+		entropy = 0
+		l += 0.0
+		for row in acc:
+			cur_l = len(row)
+			if cur_l == 0:
+				continue
+			entropy += cur_l / l * getEachEntropy(index, row)
+		return entropy
+
 	def helper_nominal(self, index, currentSet):
-		return
+		vec = []
+		for instance_index in currentSet:
+			vec.append(train_data[instance_index][index])
+		l = len(currentSet)
+		entropy = self.nominal_info(vec, index, currentSet)
+		return entropy
 	
 def check(q):
 	if q.empty():
@@ -254,29 +311,70 @@ def check(q):
 	check(qq)
 
 def main():
-	global train_data, test_data, attributeNum, instanceNum, nominal, label
+	global train_data, test_data, attributeNum, instanceNum, nominal, label, thresholdMap
 
-	train_data = arff.load(open('data/diabetes_train.arff'))
-	test_data = arff.load(open('data/diabetes_test.arff'))
+	# train_data = arff.load(open('data/diabetes_train.arff'))
+	# test_data = arff.load(open('data/diabetes_test.arff'))
+
+	train_data = arff.load(open('data/heart_train.arff'))
+	test_data = arff.load(open('data/heart_test.arff'))
 
 	attributeNum = len(train_data["attributes"]) - 1
 	if attributeNum < 0:
 		return
 
+	print train_data["attributes"]
+
 	#nominal store the nominal attribute name and value 
+	# count = 0
+	# for ele in train_data["attributes"]:
+	# 	if ele[0] != "class": 
+	# 		nominal[count] = ele[1]
+	# 		thresholdMap[count] = {}
+	# 	count += 1
+
 	count = 0
-	for ele in train_data["attributes"]:
-		if ele[0] != "class": 
-			nominal[count] = ele[1]
+	cur_row = train_data["data"][0]
+	for ele in cur_row:
+		if str(ele).isdigit:
+			nominal[count] = "NUMERIC"
+		else:
+			nominal[count] = []
+			for instance in train_data["data"]:
+				if nominal[count].count(instance[count]) == 0:
+					nominal[count].append(instance[count])
+
 		count += 1
+	print "nominal is " 
+	print "     " + str(nominal)
+	for ele in nominal:
+		count = 0
+		if nominal[ele] != "NUMERIC":
+			for item in nominal[ele]:
+				thresholdMap[ele][item] = count
+				count += 1
+
 	map_label = {}
 	count = 0
+
+	#map label to 0 and 1
 	for ele in train_data["data"]:
 		if ele[attributeNum] not in map_label:
 			map_label[ele[attributeNum]] = count
 			count += 1
 		label.append(map_label[ele[attributeNum]])
-	# print label
+	print label
+	thresholdNum = [0 for i in range(attributeNum)]
+	for i in range(attributeNum):
+		if str(train_data["data"][0][i]).isdigit():
+			continue;
+		tmp_list = []
+		for row in train_data["data"]:
+			tmp = row[i]
+			if tmp_list.count(tmp) == 0:
+				thresholdNum[i] += 1
+
+			
 	visited = []
 	instanceNum = len(train_data["data"])
 	currentSet = [i for i in range(instanceNum)]
