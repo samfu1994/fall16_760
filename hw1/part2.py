@@ -4,6 +4,9 @@ import csv
 import Queue
 import sys
 import copy
+import random
+import matplotlib.pyplot as plt
+
 
 train_data = [];
 test_data = [];
@@ -12,16 +15,17 @@ thresholdNum = []
 attributeNum = 0;
 instanceNum = 0;
 nominal = {}
-stopThreshold = 2;
-trainSetSize = 1;
+stopThreshold = 4;
 thresholdMap = []
 MAX_INIT = -2147483648
 MIN_INIT = 2147483647
 median = 1
-STOPMEG = 0
+STOPMEG = 1
 def getPrediction(node):
 	p = 0
 	n = 0
+	if node == 0:
+		return 0
 	currentSet = node.currentSet
 	for i in currentSet:
 		if label[i] == 0:
@@ -38,8 +42,8 @@ def getPrediction(node):
 
 class node:
 	def __init__(self, visited, currentSet, parent):
-		print (" ")
-		print ("size " + str(len(currentSet)))
+		# print (" ")
+		# print ("size " + str(len(currentSet)))
 		self.isLeaf = 0
 		self.visited = visited
 		self.index = -1
@@ -149,6 +153,7 @@ class node:
 				parent_entropy = -(p / pn * math.log(p / pn)) - (n / pn * math.log(n / pn))
 
 			gain = parent_entropy + max_val
+
 			if gain <= 0:
 				return gain
 
@@ -304,7 +309,7 @@ class node:
 		entropy = self.nominal_info(vec, index, currentSet)
 		return entropy
 	
-def check(q, originAttributes):
+def check(q):
 	if q.empty():
 		return
 	qq = Queue.Queue()
@@ -316,123 +321,170 @@ def check(q, originAttributes):
 		if tmp.index == -1:
 			s += "NULL"
 		else:
-			s += str(originAttributes[tmp.index][0])
+			s += str(tmp.index)
 		s += "    "
 		for i in range(l):
 			qq.put(tmp.child[i])
 	print "      " + s
-	check(qq, originAttributes)
+	check(qq)
+def func(local_train_data, local_test_data, trainSetSize):
+	global train_data, test_data, label, stopThreshold , attributeNum, instanceNum, nominal, label, thresholdMap, thresholdNum
+	accuracy = []
+	copy_train_data = copy.deepcopy(local_train_data)
+	copy_test_data = copy.deepcopy(local_test_data)
+	print len(copy_train_data["data"])
+	for train_time in range(10):
+		train_data = copy.deepcopy(copy_train_data)
+		test_data = copy.deepcopy(copy_test_data)
+		label = []
+		attributeNum = len(train_data["attributes"]) - 1
+		if attributeNum < 0:
+			return
+
+		#thresholdmap store the map from value to int for each feature
+		thresholdMap = [{} for i in range(attributeNum)]
+
+		#nominal stores the values of each features
+		count = 0
+		cur_row = train_data["data"][0]
+		for i in range(attributeNum):
+			ele = cur_row[i]
+			if not type(ele) == unicode:
+				nominal[count] = "NUMERIC"
+			else:
+				nominal[count] = []
+				#train_data["attribuets"] is a tuple, two element, first name ,second list containing values
+				for instance in train_data["attributes"][count][1]:
+					if nominal[count].count(instance) == 0:
+						nominal[count].append(instance)
+			count += 1
+
+		#build thresholdmap
+		for ele in nominal:
+			count = 0
+			if nominal[ele] != "NUMERIC":
+				for item in nominal[ele]:
+					thresholdMap[ele][item] = count
+					count += 1
+
+		map_label = {}
+		count = 0
+
+		#map label to 0 and 1
+		
+		thresholdNum = [0 for i in range(attributeNum)]
+		for i in range(attributeNum):
+			if not type(train_data["data"][0][i]) is unicode:
+				continue
+			thresholdNum[i] = len(nominal[i])
+				
+		visited = []
+		
+
+		candidate_train_data = train_data["data"]
+		test_data = test_data["data"]
+
+		train_length = len(candidate_train_data)
+		selected = []
+		selectNum = 0
+		while selectNum < train_length * trainSetSize:
+			cur = random.randint(0, train_length - 1)
+			if selected.count(cur) == 0:
+				selected.append(cur)
+				selectNum += 1
+		tmp_train_data = []
+		for ele in selected:
+			tmp_train_data.append(candidate_train_data[ele])
+		train_data = tmp_train_data
+
+		for ele in train_data:
+			if ele[attributeNum] not in map_label:
+				map_label[ele[attributeNum]] = count
+				count += 1
+			label.append(map_label[ele[attributeNum]])
+
+
+		instanceNum = len(train_data)
+		currentSet = [i for i in range(instanceNum)]
+
+		print "current " + str(len(currentSet))
+		root = node(visited, currentSet, 0)
+
+		print ("-------------------------------------------------------------------------------------------")
+
+		q = Queue.Queue()
+		q.put(root)
+		check(q)
+
+
+		test_label = []
+		predict_label = []
+		for ele in test_data:
+			test_label.append(map_label[ele[attributeNum]])
+			predict_label.append(root.predict(ele))
+
+		test_num = len(test_label)
+		correct = 0
+		for i in range(test_num):
+			if test_label[i] == predict_label[i]:
+				correct += 1
+			# print str(predict_label[i]) +"      "  + str(test_label[i])
+		# print str(correct) +"      "  + str(test_num)
+		correct += 0.0
+		accuracy.append(correct / test_num)
+		if trainSetSize == 1:
+			break
+
+	sumAccuracy = 0
+	for ele in accuracy:
+		sumAccuracy += ele
+	avgAccuracy = sumAccuracy / len(accuracy)
+	minAccuracy = min(accuracy)
+	maxAccuracy = max(accuracy)
+	print "accuracy:"
+	print sumAccuracy
+	return [avgAccuracy, minAccuracy, maxAccuracy]
 
 def main():
 	#dt-learn.py 
-	global train_data, test_data, attributeNum, instanceNum, nominal, label, thresholdMap, thresholdNum
-	global trainSetSize, stopThreshold
-	argv = sys.argv
-	argvNum = len(argv)
-	if argvNum != 4:
-		print "error arguments number"
-		return
-	train_data_name = argv[1]
-	test_data_name = argv[2]
-	stopThreshold = int(argv[3])
-	train_data = arff.load(open(train_data_name))
-	test_data = arff.load(open(test_data_name))
-	# train_data = arff.load(open('data/diabetes_train.arff'))
-	# test_data = arff.load(open('data/diabetes_test.arff'))
+	# argv = sys.argv
+	# argvNum = len(argv)
+	# if argvNum != 4:
+	# 	print "error arguments number"
+	# 	return
+	# train_data_name = argv[1]
+	# test_data_name = argv[2]
+	# stopThreshold = int(argv[3])
+	# train_data = arff.load(open(train_data_name))
+	# test_data = arff.load(open(test_data_name))
+
+	sizeVec = [0.05, 0.1, 0.2, 0.5, 1]
+
+	train_data = arff.load(open('data/diabetes_train.arff'))
+	test_data = arff.load(open('data/diabetes_test.arff'))
 
 	# train_data = arff.load(open('data/heart_train.arff'))
 	# test_data = arff.load(open('data/heart_test.arff'))
-	originAttributes = copy.deepcopy(train_data["attributes"])
-	attributeNum = len(train_data["attributes"]) - 1
-	if attributeNum < 0:
-		return
+	avgAcc = []
+	minAcc = []
+	maxAcc = []
 
-	#thresholdmap store the map from value to int for each feature
-	thresholdMap = [{} for i in range(attributeNum)]
+	for trainSetSize in sizeVec:
+		tmp = func(train_data, test_data, trainSetSize)
+		avgAcc.append(tmp[0])
+		minAcc.append(tmp[1])
+		maxAcc.append(tmp[2])
+	plt.subplot(111)
+	plt.plot(sizeVec, avgAcc, label = "average")
+	plt.plot(sizeVec, minAcc, label = "min")
+	plt.plot(sizeVec, maxAcc, label = "max")
+	plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+           ncol=2, mode="expand", borderaxespad=0.)
 
-	#nominal stores the values of each features
-	count = 0
-	cur_row = train_data["data"][0]
-	for i in range(attributeNum):
-		ele = cur_row[i]
-		if not type(ele) == unicode:
-			nominal[count] = "NUMERIC"
-		else:
-			nominal[count] = []
-			#train_data["attribuets"] is a tuple, two element, first name ,second list containing values
-			for instance in train_data["attributes"][count][1]:
-				if nominal[count].count(instance) == 0:
-					nominal[count].append(instance)
-		count += 1
-
-	for ele in nominal:
-		count = 0
-		if nominal[ele] != "NUMERIC":
-			for item in nominal[ele]:
-				thresholdMap[ele][item] = count
-				count += 1
-
-	map_label = {}
-	count = 0
-
-	#map label to 0 and 1
-	for ele in train_data["data"]:
-		if ele[attributeNum] not in map_label:
-			map_label[ele[attributeNum]] = count
-			count += 1
-		label.append(map_label[ele[attributeNum]])
-	thresholdNum = [0 for i in range(attributeNum)]
-	for i in range(attributeNum):
-		if not type(train_data["data"][0][i]) is unicode:
-			continue
-		thresholdNum[i] = len(nominal[i])
-			
-	visited = []
-	instanceNum = len(train_data["data"])
-	currentSet = [i for i in range(instanceNum)]
-
-	train_data = train_data["data"]
-	test_data = test_data["data"]
-	root = node(visited, currentSet, 0)
-
-	print ("-------------------------------------------------------------------------------------------")
-
-	q = Queue.Queue()
-	q.put(root)
-	check(q, originAttributes)
-
-	# train_label = []
-	# predict_label = []
-
-	# for ele in train_data:
-	# 	train_label.append(map_label[ele[attributeNum]])
-	# 	predict_label.append(root.predict(ele))
-
-	# train_num = len(train_label)
-	# correct = 0
-	# for i in range(train_num):
-	# 	# print str(train_label[i]) + "    " +  str(predict_label[i])
-	# 	if train_label[i] == predict_label[i]:
-	# 		correct += 1
-	# correct += 0.0
-	# print ("correct rate:" + str(correct / train_num) )
-
-
-
-	test_label = []
-	predict_label = []
-	for ele in test_data:
-		test_label.append(map_label[ele[attributeNum]])
-		predict_label.append(root.predict(ele))
-
-	test_num = len(test_label)
-	correct = 0
-	for i in range(test_num):
-		if test_label[i] == predict_label[i]:
-			correct += 1
-		print str(predict_label[i]) +"      "  + str(test_label[i])
-	# correct += 0.0
-	print str(correct) +"      "  + str(test_num)
+	plt.axis([0, 1.1, 0.5, 1])
+	plt.ylabel("accuracy")
+	plt.xlabel("training set size")
+	plt.show()
 
 
 if __name__ == "__main__":
