@@ -29,6 +29,7 @@ graph = pydot.Dot(graph_type='graph')
 
 
 def getPrediction(node):
+	#get prediction according to the p or n which one has more instances currently
 	p = 0
 	n = 0
 	currentSet = node.currentSet
@@ -48,8 +49,7 @@ def getPrediction(node):
 
 class node:
 	def __init__(self, visited, currentSet, parent, myGraph):
-		# print (" ")
-		# print ("size " + str(len(currentSet)))
+		#build tree using init function
 		self.isLeaf = 0
 		self.visited = visited
 		self.index = -1
@@ -92,19 +92,14 @@ class node:
 			[left, right] = self.getChild(currentSet, self.index, self.threshold)
 			self.child.append(node(self.visited[:], left, self, c1))
 			self.child.append(node(self.visited[:], right, self, c2))
-			print myGraph[originAttributes[self.index]]
 			if self.child[0].isLeaf:
 				myGraph[originAttributes[self.index]]["<=" + str(self.threshold)] = inverseMap[self.child[0].prediction]
 			if self.child[1].isLeaf:
 				myGraph[originAttributes[self.index]][">" + str(self.threshold)] = inverseMap[self.child[0].prediction]
-			# self.child.append(node(self.visited[:], left, self, myGraph[originAttributes[self.index]]))
-			# self.child.append(node(self.visited[:], right, self, myGraph[originAttributes[self.index]]))
 		else:
 			tmp_child = self.getChild(currentSet, self.index, self.threshold)
 			count = 0
 			for eachChild in tmp_child:
-				# if eachChild == []:
-				# 	continue
 				myGraph[originAttributes[self.index]][nominal[self.index][count]] = {}
 				self.child.append(node(self.visited[:], eachChild, self, myGraph[originAttributes[self.index]][nominal[self.index][count]]))
 				if self.child[count].isLeaf:
@@ -114,12 +109,14 @@ class node:
 		return
 
 	def predict(self, instance):
+		#api for testing set, return when reach leaf
 		if self.isLeaf:
 			return self.prediction
 		else:
 			branch = self.predict_helper(instance)
 			return self.child[branch].predict(instance)
 	def predict_helper(self, instance):
+		#call by predict when encouter an internal node, keep going downward
 		if self.isNominal:
 			return thresholdMap[self.index][instance[self.index]]
 		else:
@@ -127,7 +124,10 @@ class node:
 				return 1
 			else:
 				return 0
+
+
 	def getChild(self, currentSet, index, threshold):
+		#create child nodes according to threshold
 		if not self.isNominal:
 			left = []
 			right = []
@@ -138,9 +138,6 @@ class node:
 					left.append(i)
 			return [left, right]
 		else:
-			#let thresholdMap be a dict, nominal -> number
-			# print self.index
-			# print "     " + str(thresholdNum[self.index])
 			childList = [[] for i in range(thresholdNum[self.index])]
 			for i in currentSet:
 				feature_belong_class = thresholdMap[index][train_data[i][index]]
@@ -148,6 +145,7 @@ class node:
 			return childList
 			
 	def inforgain(self, visited, currentSet):
+		#return the max information gain of this node, set the index and threshold of this node
 			max_val = MAX_INIT
 			max_mid = 0
 			index = -1
@@ -161,8 +159,7 @@ class node:
 				else:
 					val = self.helper_nominal(attribute_index, currentSet[:])
 					mid = 0
-				#val is negative
-				# print ("val is " + str(val))
+				#val is negative, plogp is smaller than 0 because p is smaller than 1
 				if val > max_val:
 					max_val = val
 					index = attribute_index
@@ -219,6 +216,7 @@ class node:
 		return 0
 
 	def numeric_info(self, vec, mid, currentSet):
+		#call by helper_numeric to calculate
 		length = len(vec)
 		falseNeg = 0
 		truePos = 0
@@ -258,7 +256,6 @@ class node:
 		return acc
 	def helper_numeric(self, index, currentSet):
 		#find the best split in a particular feature
-		# print ("numeric :: current set size is : " + str(len(currentSet)))
 
 		vec = []
 		for instance_index in currentSet:
@@ -273,7 +270,6 @@ class node:
 			currentSet.sort()
 			tmp = currentSet[len(currentSet) / 2]
 			mid = train_data[tmp][index]
-			# print mid
 		else:
 			for i in currentSet:
 				cur = train_data[i][index]
@@ -288,6 +284,7 @@ class node:
 		return [max_entropy, mid]
 
 	def getEachEntropy(self, index, row):
+		#call by nominal_info to calculate
 		p = 0
 		n = 0
 		for ele in row:
@@ -305,6 +302,7 @@ class node:
 			return t1 * math.log(t1) + t2 * math.log(t2)
 
 	def nominal_info(self, vec, index, currentSet):
+		#call by helper_nominal to calculate
 		acc = [[] for i in range( len(nominal[index]) )]
 		count = 0
 		l = len(vec)
@@ -322,6 +320,7 @@ class node:
 		return entropy
 
 	def helper_nominal(self, index, currentSet):
+		#calculate the entropy of each feature
 		vec = []
 		for instance_index in currentSet:
 			vec.append(train_data[instance_index][index])
@@ -330,6 +329,7 @@ class node:
 		return entropy
 	
 def check(q, originAttributes):
+	#simly print the tree in the terminal
 	if q.empty():
 		return
 	qq = Queue.Queue()
@@ -350,10 +350,12 @@ def check(q, originAttributes):
 
 
 def draw(parent_name, child_name):
+	#draw each line
     edge = pydot.Edge(parent_name, child_name)
     graph.add_edge(edge)
 
 def visit(node, visited, parent=None ):
+	#recursively draw the node
     for k,v in node.iteritems():
     	cur = random.randint(1, RANDINT)
     	while visited[cur]:
@@ -379,6 +381,7 @@ def isfloat(value):
     return True
   except ValueError:
     return False
+
 def load_arff(data_name):
 	data = {}
 	data["attributes"] = []
@@ -417,6 +420,7 @@ def load_arff(data_name):
 
 	return data
 def mysort(myGraph):
+	#make the <= to be left, > to be right branch
 	if isinstance(myGraph, str):
 		return myGraph
 	tmp = []
@@ -517,11 +521,7 @@ def main():
 	# q = Queue.Queue()
 	# q.put(root)
 	# check(q, originAttributes)
-	print myGraph
 	myGraph = mysort(myGraph)
-	print ""
-	print ""
-	print myGraph
 	visited = [0 for i in range(RANDINT + 1)]
 	visit(myGraph, visited)
 	graph.write_png("ID3_" + train_data_name+".png")
