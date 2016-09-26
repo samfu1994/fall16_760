@@ -1,6 +1,6 @@
-import arff
 import math
 import csv
+import re
 import Queue
 import sys
 import copy
@@ -442,7 +442,46 @@ def func(local_train_data, local_test_data, trainSetSize):
 	minAccuracy = min(accuracy)
 	maxAccuracy = max(accuracy)
 	return [avgAccuracy, minAccuracy, maxAccuracy]
+def isfloat(value):
+  try:
+    float(value)
+    return True
+  except ValueError:
+    return False
+def load_arff(data_name):
+	data = {}
+	data["attributes"] = []
+	data["data"] = []
+	enterData = 0
+	with open(data_name) as file:
+		count = 0
+		for line in file:
+			if enterData:
+				vec = re.split("[,\n ]+", line)
+				l = len(vec)
+				for i in range(l):
+					if isfloat(vec[i]):
+						vec[i] = float(vec[i])
+				data["data"].append(vec)
+				continue
+			vec = re.split("[ ,}\n']+", line)
+			if len(vec) > 0 and vec[0] == "@attribute":
+				if vec[2] == "{":
+					values = []
+					for i in range(2, len(vec)):
+						if i == len(vec) - 1:
+							vec[i] = vec[i][:-1]
+						if vec[i] != "{" and vec[i] != "}" and vec[i] != "":
+							values.append(vec[i])
+					data["attributes"].append((vec[1], values))
 
+				else:
+					data["attributes"].append((vec[1], "NUMERIC"))
+
+			if vec[0] == "@data":
+				enterData = 1
+
+	return data
 def main():
 	#dt-learn.py 
 	# argv = sys.argv
@@ -458,11 +497,13 @@ def main():
 
 	sizeVec = [0.05, 0.1, 0.2, 0.5, 1]
 
-	train_data = arff.load(open('data/diabetes_train.arff'))
-	test_data = arff.load(open('data/diabetes_test.arff'))
 
-	# train_data = arff.load(open('data/heart_train.arff'))
-	# test_data = arff.load(open('data/heart_test.arff'))
+	# train_data = load_arff('data/diabetes_train.arff')
+	# test_data = load_arff('data/diabetes_test.arff')
+
+	train_data = load_arff('data/heart_train.arff')
+	test_data = load_arff('data/heart_test.arff')
+
 	avgAcc = []
 	minAcc = []
 	maxAcc = []

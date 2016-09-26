@@ -1,9 +1,9 @@
-import arff
 import math
 import csv
 import Queue
 import sys
 import copy
+import re
 import random
 import pydot
 
@@ -21,6 +21,7 @@ thresholdMap = []
 MAX_INIT = -2147483648
 MIN_INIT = 2147483647
 median = 1
+RANDINT = 20000
 STOPMEG = 0
 inverseMap = []
 graph = pydot.Dot(graph_type='graph')
@@ -46,8 +47,8 @@ def getPrediction(node):
 
 class node:
 	def __init__(self, visited, currentSet, parent, myGraph):
-		print (" ")
-		print ("size " + str(len(currentSet)))
+		# print (" ")
+		# print ("size " + str(len(currentSet)))
 		self.isLeaf = 0
 		self.visited = visited
 		self.index = -1
@@ -357,9 +358,9 @@ def draw(parent_name, child_name):
 
 def visit(node, visited, parent=None ):
     for k,v in node.iteritems():
-    	cur = random.randint(1, 1000)
+    	cur = random.randint(1, RANDINT - 1)
     	while not visited[cur]:
-    		cur = random.randint(1, 1000)
+    		cur = random.randint(1, RANDINT)
     		visited[cur] = 1
     	k = str(cur) + "_" + k
         if isinstance(v, dict):
@@ -370,11 +371,50 @@ def visit(node, visited, parent=None ):
             visit(v, visited, k)
         else:
         	draw(parent, k)
-        	cur = random.randint(1, 1000)
+        	cur = random.randint(1, RANDINT)
 	    	while visited[cur]:
-	    		cur = random.randint(1, 1000)
-        	draw(k, str(cur) + "_" + v)
+	    		cur = random.randint(1, RANDINT)
+        	draw(k, str(cur) + "_" + v) 
+def isfloat(value):
+  try:
+    float(value)
+    return True
+  except ValueError:
+    return False
+def load_arff(data_name):
+	data = {}
+	data["attributes"] = []
+	data["data"] = []
+	enterData = 0
+	with open(data_name) as file:
+		count = 0
+		for line in file:
+			if enterData:
+				vec = re.split("[,\n ]+", line)
+				l = len(vec)
+				for i in range(l):
+					if isfloat(vec[i]):
+						vec[i] = float(vec[i])
+				data["data"].append(vec)
+				continue
+			vec = re.split("[ ,}\n']+", line)
+			if len(vec) > 0 and vec[0] == "@attribute":
+				if vec[2] == "{":
+					values = []
+					for i in range(2, len(vec)):
+						if i == len(vec) - 1:
+							vec[i] = vec[i][:-1]
+						if vec[i] != "{" and vec[i] != "}" and vec[i] != "":
+							values.append(vec[i])
+					data["attributes"].append((vec[1], values))
 
+				else:
+					data["attributes"].append((vec[1], "NUMERIC"))
+
+			if vec[0] == "@data":
+				enterData = 1
+
+	return data
 
 def main():
 	#dt-learn.py 
@@ -388,8 +428,15 @@ def main():
 	train_data_name = argv[1]
 	test_data_name = argv[2]
 	stopThreshold = int(argv[3])
-	train_data = arff.load(open(train_data_name))
-	test_data = arff.load(open(test_data_name))
+
+	train_data = load_arff(train_data_name)
+	test_data = load_arff(test_data_name)
+
+	# train_data = arff.load(open(train_data_name))
+	# test_data = arff.load(open(test_data_name))
+
+
+	# print train_data["attributes"]
 	# train_data = arff.load(open('data/diabetes_train.arff'))
 	# test_data = arff.load(open('data/diabetes_test.arff'))
 
@@ -398,6 +445,7 @@ def main():
 	originAttributes = []
 	for ele in train_data["attributes"]:
 		originAttributes.append(ele[0])
+
 	attributeNum = len(train_data["attributes"]) - 1
 	if attributeNum < 0:
 		return
@@ -461,8 +509,8 @@ def main():
 	# q = Queue.Queue()
 	# q.put(root)
 	# check(q, originAttributes)
-	print myGraph
-	visited = [0 for i in range(1000)]
+	# print myGraph
+	visited = [0 for i in range(RANDINT)]
 	visit(myGraph, visited)
 	graph.write_png("ID3_" + train_data_name+".png")
 
