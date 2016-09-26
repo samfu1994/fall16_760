@@ -21,11 +21,13 @@ originAttributes = 0
 thresholdMap = []
 MAX_INIT = -2147483648
 MIN_INIT = 2147483647
-median = 1
+median = 0
 RANDINT = 20000
 STOPMEG = 0
+inverseThresholdMap = {}
 inverseMap = []
-graph = pydot.Dot(graph_type='graph')
+
+splitter = "|	"
 
 
 def getPrediction(node):
@@ -48,7 +50,7 @@ def getPrediction(node):
 
 
 class node:
-	def __init__(self, visited, currentSet, parent, myGraph):
+	def __init__(self, visited, currentSet, parent):
 		#build tree using init function
 		self.isLeaf = 0
 		self.visited = visited
@@ -59,7 +61,13 @@ class node:
 		self.parent = parent
 		self.currentSet = currentSet
 		self.child = []
-		self.graph = myGraph
+		self.p = 0
+		self.n = 0
+		for ele in currentSet:
+			if label[ele] == 0:
+				self.n += 1
+			else:
+				self.p += 1
 
 		if self.judgeStop(visited[:], currentSet):
 			self.isLeaf = 1
@@ -80,30 +88,18 @@ class node:
 		else:
 			self.isNominal = 0
 
-		myGraph[originAttributes[self.index]] = {}
 
-		self.visited.append(self.index);
+		# self.visited.append(self.index);
 
 		if not self.isNominal:
-			myGraph[originAttributes[self.index]]["<=" + str(self.threshold)] = {}
-			c1 = myGraph[originAttributes[self.index]]["<=" + str(self.threshold)]
-			myGraph[originAttributes[self.index]][">" + str(self.threshold)] = {}
-			c2 = myGraph[originAttributes[self.index]][">" + str(self.threshold)] 
 			[left, right] = self.getChild(currentSet, self.index, self.threshold)
-			self.child.append(node(self.visited[:], left, self, c1))
-			self.child.append(node(self.visited[:], right, self, c2))
-			if self.child[0].isLeaf:
-				myGraph[originAttributes[self.index]]["<=" + str(self.threshold)] = inverseMap[self.child[0].prediction]
-			if self.child[1].isLeaf:
-				myGraph[originAttributes[self.index]][">" + str(self.threshold)] = inverseMap[self.child[0].prediction]
+			self.child.append(node(self.visited[:], left, self))
+			self.child.append(node(self.visited[:], right, self))
 		else:
 			tmp_child = self.getChild(currentSet, self.index, self.threshold)
 			count = 0
 			for eachChild in tmp_child:
-				myGraph[originAttributes[self.index]][nominal[self.index][count]] = {}
-				self.child.append(node(self.visited[:], eachChild, self, myGraph[originAttributes[self.index]][nominal[self.index][count]]))
-				if self.child[count].isLeaf:
-					myGraph[originAttributes[self.index]][nominal[self.index][count]] = inverseMap[self.child[0].prediction]
+				self.child.append(node(self.visited[:], eachChild, self))
 				count += 1
 
 		return
@@ -138,10 +134,12 @@ class node:
 					left.append(i)
 			return [left, right]
 		else:
+			self.threshold = [0 for i in range(thresholdNum[self.index])]
 			childList = [[] for i in range(thresholdNum[self.index])]
 			for i in currentSet:
 				feature_belong_class = thresholdMap[index][train_data[i][index]]
 				childList[feature_belong_class].append(i)
+				self.threshold[feature_belong_class] = train_data[i][index]
 			return childList
 			
 	def inforgain(self, visited, currentSet):
@@ -159,13 +157,23 @@ class node:
 				else:
 					val = self.helper_nominal(attribute_index, currentSet[:])
 					mid = 0
+
+				# print "feature is : " + originAttributes[attribute_index]
+				# print "inforgain is : " + str(val)
+				# print "mid is : " + str(mid)
+
 				#val is negative, plogp is smaller than 0 because p is smaller than 1
 				if val > max_val:
 					max_val = val
 					index = attribute_index
 					max_mid = mid
+			# print "				select : " + str(originAttributes[index])
 			if nominal[index] == "NUMERIC":
 				self.threshold = max_mid
+			else:
+				self.threshold = []
+				for i in range(thresholdNum[self.index]):
+					self.threshold.append(inverseThresholdMap[self.index][i]) 
 			#calculate self entropy to get the information gain by minus the entropy of child
 			p = 0
 			n = 0
@@ -237,18 +245,23 @@ class node:
 		pNeg = (trueNeg + falseNeg + 0.0) / length
 		pPos = 1 - pNeg
 
-		if pNeg == 1 or pPos == 1:
-			return 0
+		# if pNeg == 1 or pPos == 1:
+		# 	return 0
 
 
 		acc = 0.0
-		t1 = trueNeg / (trueNeg + falseNeg + 0.0)
+		if trueNeg + falseNeg == 0:
+			t1 = 0
+		else:
+			t1 = trueNeg / (trueNeg + falseNeg + 0.0)
 		t2 = 1 - t1
 		if t1 != 1 and t1 != 0:
 			acc += pNeg * ( t1 * math.log(t1) + t2 * math.log(t2) )
 
-
-		t1 = truePos / (truePos + falsePos + 0.0)
+		if truePos + falsePos == 0:
+			t1 = 0
+		else:
+			t1 = truePos / (truePos + falsePos + 0.0)
 		t2 = 1 - t1
 		if t1 != 1 and t1 != 0:
 			acc += pPos * ( t1 * math.log(t1) + t2 * math.log(t2) )
@@ -265,23 +278,27 @@ class node:
 		max_val = MAX_INIT
 		max_entropy = -1
 
+		valueSet = [];
+		for ele in currentSet:
+			valueSet.append(train_data[ele][index])
+		valueSet.sort();
 
 		if median:
 			currentSet.sort()
 			tmp = currentSet[len(currentSet) / 2]
-			mid = train_data[tmp][index]
+			max_mid = train_data[tmp][index]
 		else:
-			for i in currentSet:
-				cur = train_data[i][index]
-				if cur > max_val:
-					max_val = cur
-				if cur < min_val:
-					min_val = cur
-			mid = (max_val + min_val) / 2
-		max_entropy = self.numeric_info(vec, mid, currentSet)
+			for i in range(l - 1):
+				# instance_index = currentSet[i];
+				# second = currentSet[i + 1]
+				# mid = (train_data[instance_index][index] + train_data[second][index]) / 2
+				mid = valueSet[i] / 2 + valueSet[i + 1] / 2
+				t = self.numeric_info(vec, mid, currentSet)
+				if max_entropy < t:
+					max_entropy = t
+					max_mid = mid
 
-
-		return [max_entropy, mid]
+		return [max_entropy, max_mid]
 
 	def getEachEntropy(self, index, row):
 		#call by nominal_info to calculate
@@ -328,53 +345,8 @@ class node:
 		entropy = self.nominal_info(vec, index, currentSet)
 		return entropy
 	
-def check(q, originAttributes):
-	#simly print the tree in the terminal
-	if q.empty():
-		return
-	qq = Queue.Queue()
-
-	s = ""
-	while not q.empty():
-		tmp = q.get()
-		l = len(tmp.child)
-		if tmp.index == -1:
-			s += "NULL"
-		else:
-			s += str(originAttributes[tmp.index][0])
-		s += "    "
-		for i in range(l):
-			qq.put(tmp.child[i])
-	print "      " + s
-	check(qq, originAttributes)
 
 
-def draw(parent_name, child_name):
-	#draw each line
-    edge = pydot.Edge(parent_name, child_name)
-    graph.add_edge(edge)
-
-def visit(node, visited, parent=None ):
-	#recursively draw the node
-    for k,v in node.iteritems():
-    	cur = random.randint(1, RANDINT)
-    	while visited[cur]:
-    		cur = random.randint(1, RANDINT)
-    	visited[cur] = 1
-    	k = str(cur) + "_" + k
-        if isinstance(v, dict):
-            # We start wth the root node whose parent is None
-            # we don't want to graph the None node
-            if parent:
-                draw(parent, k)
-            visit(v, visited, k)
-        else:
-        	draw(parent, k)
-        	cur = random.randint(1, RANDINT)
-	    	while visited[cur]:
-	    		cur = random.randint(1, RANDINT)
-	    	visited[cur] = 1
-        	draw(k, str(cur) + "_" + v) 
 def isfloat(value):
   try:
     float(value)
@@ -419,21 +391,65 @@ def load_arff(data_name):
 				enterData = 1
 
 	return data
-def mysort(myGraph):
-	#make the <= to be left, > to be right branch
-	if isinstance(myGraph, str):
-		return myGraph
-	tmp = []
-	myGraph =  collections.OrderedDict(sorted(myGraph.items(), key=lambda t: t[0]))
-	for i in myGraph.items():
-		k = i[0]
-		v = i[1]
-		myGraph[k] = mysort(v)
-	return myGraph
+
+def printTree(node, layer):
+
+	if node.isNominal:
+		l = len(node.child)
+		base = ""
+		for i in range(layer):
+			base += splitter
+		for i in range(l):
+			s = ""
+			s += base
+			s += originAttributes[node.index]
+			s += " = "
+			# print str(i) + "    " + len(node.threshold)
+			s += str(node.threshold[i])
+			s += "  [ " + str(node.child[i].n) + "  " + str(node.child[i].p) + " ]" 
+			if node.child[i].isLeaf:
+				s += " : " + inverseMap[node.child[i].prediction]
+				print s
+			else:
+				print s
+				printTree(node.child[i], layer + 1)
+
+	else:
+		s = ""
+		for i in range(layer):
+			s += splitter
+		s += originAttributes[node.index]
+		s += " <= "
+		s += str(node.threshold)
+		s += "  [ " + str(node.child[0].n) + "  " + str(node.child[0].p) + " ]" 
+		if node.child[0].isLeaf:
+			s += " : " + inverseMap[node.child[0].prediction]
+			print s
+		else:
+			print s
+			printTree(node.child[0], layer + 1)
+
+		s = ""
+		for i in range(layer):
+			s += splitter
+		s += originAttributes[node.index]
+		s += " > "
+		s += str(node.threshold)
+		s += "  [ " + str(node.child[1].n) + "  " + str(node.child[1].p) + " ]" 
+
+		if node.child[1].isLeaf:
+			s += " : " + inverseMap[node.child[1].prediction]
+			print s
+		else:
+			print s
+			printTree(node.child[1], layer + 1)
+
+	
+
 def main():
 	#dt-learn.py 
 	global train_data, test_data, attributeNum, instanceNum, nominal, label, thresholdMap, thresholdNum
-	global trainSetSize, stopThreshold, originAttributes, inverseMap
+	global trainSetSize, stopThreshold, originAttributes, inverseMap, inverseThresholdMap
 	argv = sys.argv
 	argvNum = len(argv)
 	if argvNum != 4:
@@ -466,6 +482,7 @@ def main():
 
 	#thresholdmap store the map from value to int for each feature
 	thresholdMap = [{} for i in range(attributeNum)]
+	inverseThresholdMap =  [{} for i in range(attributeNum)]
 
 	#nominal stores the values of each features
 	count = 0
@@ -488,6 +505,7 @@ def main():
 		if nominal[ele] != "NUMERIC":
 			for item in nominal[ele]:
 				thresholdMap[ele][item] = count
+				inverseThresholdMap[ele][count] = item
 				count += 1
 	map_label = {}
 	count = 0
@@ -513,35 +531,9 @@ def main():
 	train_data = train_data["data"]
 	test_data = test_data["data"]
 
-	myGraph = {}
-	root = node(visited, currentSet, 0, myGraph)
+	root = node(visited, currentSet, 0)
 
-	print ("-------------------------------------------------------------------------------------------")
-
-	# q = Queue.Queue()
-	# q.put(root)
-	# check(q, originAttributes)
-	myGraph = mysort(myGraph)
-	visited = [0 for i in range(RANDINT + 1)]
-	visit(myGraph, visited)
-	graph.write_png("ID3_" + train_data_name+".png")
-
-	# train_label = []
-	# predict_label = []
-
-	# for ele in train_data:
-	# 	train_label.append(map_label[ele[attributeNum]])
-	# 	predict_label.append(root.predict(ele))
-
-	# train_num = len(train_label)
-	# correct = 0
-	# for i in range(train_num):
-	# 	# print str(train_label[i]) + "    " +  str(predict_label[i])
-	# 	if train_label[i] == predict_label[i]:
-	# 		correct += 1
-	# correct += 0.0
-	# print ("correct rate:" + str(correct / train_num) )
-
+	printTree(root, 0)
 
 
 	test_label = []
@@ -555,9 +547,9 @@ def main():
 	for i in range(test_num):
 		if test_label[i] == predict_label[i]:
 			correct += 1
-		print str(predict_label[i]) +"      "  + str(test_label[i])
+		print str(i) + ": Actual: " + str(inverseMap[predict_label[i]]) +" Predicted: "  + str(inverseMap[test_label[i]]) 
 	# correct += 0.0
-	print str(correct) +"      "  + str(test_num)
+	print "Number of correctly classified: " + str(correct) +" Total number of test instances: "  + str(test_num)
 
 
 
