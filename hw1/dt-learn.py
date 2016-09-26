@@ -6,6 +6,7 @@ import copy
 import re
 import random
 import pydot
+import collections
 
 train_data = [];
 test_data = [];
@@ -91,6 +92,7 @@ class node:
 			[left, right] = self.getChild(currentSet, self.index, self.threshold)
 			self.child.append(node(self.visited[:], left, self, c1))
 			self.child.append(node(self.visited[:], right, self, c2))
+			print myGraph[originAttributes[self.index]]
 			if self.child[0].isLeaf:
 				myGraph[originAttributes[self.index]]["<=" + str(self.threshold)] = inverseMap[self.child[0].prediction]
 			if self.child[1].isLeaf:
@@ -167,8 +169,6 @@ class node:
 					max_mid = mid
 			if nominal[index] == "NUMERIC":
 				self.threshold = max_mid
-				print "index  " + str(index)
-				print max_mid
 			#calculate self entropy to get the information gain by minus the entropy of child
 			p = 0
 			n = 0
@@ -309,8 +309,6 @@ class node:
 		count = 0
 		l = len(vec)
 		for count in range(l):
-			# print "map is    "
-			# print "          " + str(thresholdMap[index])
 			cur = thresholdMap[index][vec[count]]
 			acc[cur].append(currentSet[count])
 		
@@ -325,7 +323,6 @@ class node:
 
 	def helper_nominal(self, index, currentSet):
 		vec = []
-		# print ("current set size is : " + str(len(currentSet)))
 		for instance_index in currentSet:
 			vec.append(train_data[instance_index][index])
 		l = len(currentSet)
@@ -419,7 +416,16 @@ def load_arff(data_name):
 				enterData = 1
 
 	return data
-
+def mysort(myGraph):
+	if isinstance(myGraph, str):
+		return myGraph
+	tmp = []
+	myGraph =  collections.OrderedDict(sorted(myGraph.items(), key=lambda t: t[0]))
+	for i in myGraph.items():
+		k = i[0]
+		v = i[1]
+		myGraph[k] = mysort(v)
+	return myGraph
 def main():
 	#dt-learn.py 
 	global train_data, test_data, attributeNum, instanceNum, nominal, label, thresholdMap, thresholdNum
@@ -502,7 +508,7 @@ def main():
 
 	train_data = train_data["data"]
 	test_data = test_data["data"]
-	
+
 	myGraph = {}
 	root = node(visited, currentSet, 0, myGraph)
 
@@ -511,7 +517,11 @@ def main():
 	# q = Queue.Queue()
 	# q.put(root)
 	# check(q, originAttributes)
-	# print myGraph
+	print myGraph
+	myGraph = mysort(myGraph)
+	print ""
+	print ""
+	print myGraph
 	visited = [0 for i in range(RANDINT + 1)]
 	visit(myGraph, visited)
 	graph.write_png("ID3_" + train_data_name+".png")
