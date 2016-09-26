@@ -121,6 +121,7 @@ class node:
 			
 	def inforgain(self, visited, currentSet):
 			max_val = MAX_INIT
+			max_mid = 0
 			index = -1
 			for attribute_index in range(attributeNum):
 				if visited.count(attribute_index) != 0:
@@ -129,15 +130,19 @@ class node:
 					vec = self.helper_numeric(attribute_index, currentSet[:])
 					val = vec[0]
 					mid = vec[1]
-					self.threshold = mid
 				else:
 					val = self.helper_nominal(attribute_index, currentSet[:])
-					self.threshold = None
+					mid = 0
 				#val is negative
 				# print ("val is " + str(val))
 				if val > max_val:
 					max_val = val
 					index = attribute_index
+					max_mid = mid
+			if nominal[index] == "NUMERIC":
+				self.threshold = max_mid
+				print "index  " + str(index)
+				print max_mid
 			#calculate self entropy to get the information gain by minus the entropy of child
 			p = 0
 			n = 0
@@ -153,13 +158,13 @@ class node:
 				parent_entropy = -(p / pn * math.log(p / pn)) - (n / pn * math.log(n / pn))
 
 			gain = parent_entropy + max_val
-
 			if gain <= 0:
 				return gain
 
 			visited.append(index)
 			self.index = index
 			return gain
+	
 	
 
 
@@ -349,7 +354,7 @@ def func(local_train_data, local_test_data, trainSetSize):
 		cur_row = train_data["data"][0]
 		for i in range(attributeNum):
 			ele = cur_row[i]
-			if not type(ele) == unicode:
+			if not type(ele) == str:
 				nominal[count] = "NUMERIC"
 			else:
 				nominal[count] = []
@@ -374,7 +379,7 @@ def func(local_train_data, local_test_data, trainSetSize):
 		
 		thresholdNum = [0 for i in range(attributeNum)]
 		for i in range(attributeNum):
-			if not type(train_data["data"][0][i]) is unicode:
+			if not type(train_data["data"][0][i]) is str:
 				continue
 			thresholdNum[i] = len(nominal[i])
 				
@@ -457,12 +462,15 @@ def load_arff(data_name):
 		count = 0
 		for line in file:
 			if enterData:
+				row = []
 				vec = re.split("[,\n ]+", line)
 				l = len(vec)
 				for i in range(l):
-					if isfloat(vec[i]):
-						vec[i] = float(vec[i])
-				data["data"].append(vec)
+					if isfloat(vec[i]) and vec[i] != "":
+						row.append(float(vec[i]))
+					elif vec[i] != "":
+						row.append(vec[i])
+				data["data"].append(row)
 				continue
 			vec = re.split("[ ,}\n']+", line)
 			if len(vec) > 0 and vec[0] == "@attribute":
@@ -482,6 +490,7 @@ def load_arff(data_name):
 				enterData = 1
 
 	return data
+
 def main():
 	#dt-learn.py 
 	# argv = sys.argv

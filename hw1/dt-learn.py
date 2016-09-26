@@ -137,6 +137,8 @@ class node:
 			return [left, right]
 		else:
 			#let thresholdMap be a dict, nominal -> number
+			# print self.index
+			# print "     " + str(thresholdNum[self.index])
 			childList = [[] for i in range(thresholdNum[self.index])]
 			for i in currentSet:
 				feature_belong_class = thresholdMap[index][train_data[i][index]]
@@ -145,6 +147,7 @@ class node:
 			
 	def inforgain(self, visited, currentSet):
 			max_val = MAX_INIT
+			max_mid = 0
 			index = -1
 			for attribute_index in range(attributeNum):
 				if visited.count(attribute_index) != 0:
@@ -153,15 +156,19 @@ class node:
 					vec = self.helper_numeric(attribute_index, currentSet[:])
 					val = vec[0]
 					mid = vec[1]
-					self.threshold = mid
 				else:
 					val = self.helper_nominal(attribute_index, currentSet[:])
-					self.threshold = None
+					mid = 0
 				#val is negative
 				# print ("val is " + str(val))
 				if val > max_val:
 					max_val = val
 					index = attribute_index
+					max_mid = mid
+			if nominal[index] == "NUMERIC":
+				self.threshold = max_mid
+				print "index  " + str(index)
+				print max_mid
 			#calculate self entropy to get the information gain by minus the entropy of child
 			p = 0
 			n = 0
@@ -278,13 +285,6 @@ class node:
 		max_entropy = self.numeric_info(vec, mid, currentSet)
 
 
-		# for i in range(l - 1):
-		# 		instance_index = currentSet[i];
-		# 		second = currentSet[i + 1]
-		# 		# print str(instance_index) + "   " + str(second)
-		# 		mid = (train_data[instance_index][index] + train_data[second][index]) / 2
-		# 		max_entropy = max(max_entropy, self.numeric_info(vec, mid, currentSet) )
-
 		return [max_entropy, mid]
 
 	def getEachEntropy(self, index, row):
@@ -358,10 +358,10 @@ def draw(parent_name, child_name):
 
 def visit(node, visited, parent=None ):
     for k,v in node.iteritems():
-    	cur = random.randint(1, RANDINT - 1)
-    	while not visited[cur]:
+    	cur = random.randint(1, RANDINT)
+    	while visited[cur]:
     		cur = random.randint(1, RANDINT)
-    		visited[cur] = 1
+    	visited[cur] = 1
     	k = str(cur) + "_" + k
         if isinstance(v, dict):
             # We start wth the root node whose parent is None
@@ -374,6 +374,7 @@ def visit(node, visited, parent=None ):
         	cur = random.randint(1, RANDINT)
 	    	while visited[cur]:
 	    		cur = random.randint(1, RANDINT)
+	    	visited[cur] = 1
         	draw(k, str(cur) + "_" + v) 
 def isfloat(value):
   try:
@@ -390,12 +391,15 @@ def load_arff(data_name):
 		count = 0
 		for line in file:
 			if enterData:
+				row = []
 				vec = re.split("[,\n ]+", line)
 				l = len(vec)
 				for i in range(l):
-					if isfloat(vec[i]):
-						vec[i] = float(vec[i])
-				data["data"].append(vec)
+					if isfloat(vec[i]) and vec[i] != "":
+						row.append(float(vec[i]))
+					elif vec[i] != "":
+						row.append(vec[i])
+				data["data"].append(row)
 				continue
 			vec = re.split("[ ,}\n']+", line)
 			if len(vec) > 0 and vec[0] == "@attribute":
@@ -460,7 +464,7 @@ def main():
 	for i in range(attributeNum):
 		ele = cur_row[i]
 		name2index[train_data["attributes"][count][0]] = count
-		if not type(ele) == unicode:
+		if not type(ele) == str:
 			nominal[count] = "NUMERIC"
 		else:
 			nominal[count] = []
@@ -469,14 +473,12 @@ def main():
 				if nominal[count].count(instance) == 0:
 					nominal[count].append(instance)
 		count += 1
-
 	for ele in nominal:
 		count = 0
 		if nominal[ele] != "NUMERIC":
 			for item in nominal[ele]:
 				thresholdMap[ele][item] = count
 				count += 1
-
 	map_label = {}
 	count = 0
 
@@ -490,7 +492,7 @@ def main():
 		label.append(map_label[ele[attributeNum]])
 	thresholdNum = [0 for i in range(attributeNum)]
 	for i in range(attributeNum):
-		if not type(train_data["data"][0][i]) is unicode:
+		if not type(train_data["data"][0][i]) is str:
 			continue
 		thresholdNum[i] = len(nominal[i])
 			
@@ -500,7 +502,7 @@ def main():
 
 	train_data = train_data["data"]
 	test_data = test_data["data"]
-
+	
 	myGraph = {}
 	root = node(visited, currentSet, 0, myGraph)
 
@@ -510,7 +512,7 @@ def main():
 	# q.put(root)
 	# check(q, originAttributes)
 	# print myGraph
-	visited = [0 for i in range(RANDINT)]
+	visited = [0 for i in range(RANDINT + 1)]
 	visit(myGraph, visited)
 	graph.write_png("ID3_" + train_data_name+".png")
 
