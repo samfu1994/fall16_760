@@ -547,7 +547,7 @@ def main():
 	for i in range(test_num):
 		if test_label[i] == predict_label[i]:
 			correct += 1
-		print str(i) + ": Actual: " + str(inverseMap[predict_label[i]]) +" Predicted: "  + str(inverseMap[test_label[i]]) 
+		print str(i + 1) + ": Actual: " + str(inverseMap[test_label[i]])  +" Predicted: "  +  str(inverseMap[predict_label[i]])
 	# correct += 0.0
 	print "Number of correctly classified: " + str(correct) +" Total number of test instances: "  + str(test_num)
 
