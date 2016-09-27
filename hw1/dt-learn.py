@@ -6,6 +6,7 @@ import copy
 import re
 import random
 import pydot
+from sets import Set
 import collections
 
 train_data = [];
@@ -158,12 +159,12 @@ class node:
 					val = self.helper_nominal(attribute_index, currentSet[:])
 					mid = 0
 
-				# print "feature is : " + originAttributes[attribute_index]
-				# print "inforgain is : " + str(val)
-				# print "mid is : " + str(mid)
+				# print "		feature is : " + originAttributes[attribute_index]
+				# print "		inforgain is : " + str(val)
+				# print "		mid is : " + str(mid)
 
 				#val is negative, plogp is smaller than 0 because p is smaller than 1
-				if val > max_val:
+				if val > max_val + 0.000000000000001:
 					max_val = val
 					index = attribute_index
 					max_mid = mid
@@ -214,9 +215,9 @@ class node:
 		#has only one class
 		l = []
 		for i in currentSet:
-			if l.count(label[i]) != 0:
+			if l.count(label[i]) == 0:
 				l.append(label[i])
-		if len(l) == 1:
+		if len(l) <= 1:
 			if STOPMEG:
 				print "has only one class remaining"
 			return 1
@@ -245,28 +246,56 @@ class node:
 		pNeg = (trueNeg + falseNeg + 0.0) / length
 		pPos = 1 - pNeg
 
-		# if pNeg == 1 or pPos == 1:
-		# 	return 0
-
-
 		acc = 0.0
+
 		if trueNeg + falseNeg == 0:
 			t1 = 0
 		else:
 			t1 = trueNeg / (trueNeg + falseNeg + 0.0)
 		t2 = 1 - t1
+
 		if t1 != 1 and t1 != 0:
-			acc += pNeg * ( t1 * math.log(t1) + t2 * math.log(t2) )
+			acc += pNeg * ( t1 * math.log(t1))
+		if t2 != 1 and t2 != 0:
+			acc +=  pNeg * ( t2 * math.log(t2))
+
 
 		if truePos + falsePos == 0:
 			t1 = 0
 		else:
 			t1 = truePos / (truePos + falsePos + 0.0)
 		t2 = 1 - t1
+
 		if t1 != 1 and t1 != 0:
-			acc += pPos * ( t1 * math.log(t1) + t2 * math.log(t2) )
+			acc += pPos * ( t1 * math.log(t1))
+		if t2 != 1 and t2 != 0:
+			acc += pPos * t2 * math.log(t2)
 		# -1 ~ 0
 		return acc
+	def getMidVec(self, valueSet):
+		l = len(valueSet)
+		s = Set()
+		res = []
+		pre_neg = -1
+		pre_pos = -1
+		for ele in valueSet:
+			if ele not in s:
+				s.add(ele)
+		s = sorted(s, key = lambda ele : ele[0])
+		for i in range(len(s)):
+			cur = s[i][0]
+			cur_label = s[i][1]
+			for j in range(i + 1, len(s)):
+				if cur == s[j][0]:
+					continue
+				if cur_label == s[j][1]:
+					if j < len(s) - 1 and s[j + 1][0] == s[j][0] and s[j + 1][1] != s[j][1]:
+						res.append((cur + s[j][0]) / 2)
+					break
+				res.append((cur + s[j][0]) / 2)
+
+		return res
+
 	def helper_numeric(self, index, currentSet):
 		#find the best split in a particular feature
 
@@ -277,22 +306,26 @@ class node:
 		min_val = MIN_INIT
 		max_val = MAX_INIT
 		max_entropy = -1
+		max_mid = -1
 
 		valueSet = [];
 		for ele in currentSet:
-			valueSet.append(train_data[ele][index])
-		valueSet.sort();
+			valueSet.append((train_data[ele][index], label[ele]))
+		valueSet.sort(key = lambda tup: tup[0]);
 
+		count = [0, 0]
+		for i in range(len(currentSet)):
+			count[label[currentSet[i]]] += 1
 		if median:
 			currentSet.sort()
 			tmp = currentSet[len(currentSet) / 2]
 			max_mid = train_data[tmp][index]
 		else:
-			for i in range(l - 1):
-				# instance_index = currentSet[i];
-				# second = currentSet[i + 1]
-				# mid = (train_data[instance_index][index] + train_data[second][index]) / 2
-				mid = valueSet[i] / 2 + valueSet[i + 1] / 2
+			midVec = self.getMidVec(valueSet)
+			ll = len(midVec)
+			for i in range(ll):
+
+				mid = midVec[i]
 				t = self.numeric_info(vec, mid, currentSet)
 				if max_entropy < t:
 					max_entropy = t
@@ -404,9 +437,8 @@ def printTree(node, layer):
 			s += base
 			s += originAttributes[node.index]
 			s += " = "
-			# print str(i) + "    " + len(node.threshold)
 			s += str(node.threshold[i])
-			s += "  [ " + str(node.child[i].n) + "  " + str(node.child[i].p) + " ]" 
+			s += "  [" + str(node.child[i].n) + " " + str(node.child[i].p) + "]" 
 			if node.child[i].isLeaf:
 				s += " : " + inverseMap[node.child[i].prediction]
 				print s
@@ -420,8 +452,16 @@ def printTree(node, layer):
 			s += splitter
 		s += originAttributes[node.index]
 		s += " <= "
-		s += str(node.threshold)
-		s += "  [ " + str(node.child[0].n) + "  " + str(node.child[0].p) + " ]" 
+		tmp = str(node.threshold)
+		vv = tmp.split('.')
+		if len(vv[1]) < 6:
+			diff = 6 - len(vv[1])
+			for i in range(diff):
+				vv[1] += "0"
+		tmp = vv[0] + "." + vv[1]
+		s += tmp
+
+		s += "  [" + str(node.child[0].n) + " " + str(node.child[0].p) + "]" 
 		if node.child[0].isLeaf:
 			s += " : " + inverseMap[node.child[0].prediction]
 			print s
@@ -434,8 +474,16 @@ def printTree(node, layer):
 			s += splitter
 		s += originAttributes[node.index]
 		s += " > "
-		s += str(node.threshold)
-		s += "  [ " + str(node.child[1].n) + "  " + str(node.child[1].p) + " ]" 
+		tmp = str(node.threshold)
+		vv = tmp.split('.')
+		if len(vv[1]) < 6:
+			diff = 6 - len(vv[1])
+			for i in range(diff):
+				vv[1] += "0"
+		tmp = vv[0] + "." + vv[1]
+		s += tmp
+
+		s += "  [" + str(node.child[1].n) + " " + str(node.child[1].p) + "]" 
 
 		if node.child[1].isLeaf:
 			s += " : " + inverseMap[node.child[1].prediction]
@@ -512,11 +560,12 @@ def main():
 
 	#map label to 0 and 1
 	inverseMap = [0, 0]
+	inverseMap[0] = "negative"
+	inverseMap[1] = "positive"
+	map_label["positive"] = 1
+	map_label["negative"] = 0
+
 	for ele in train_data["data"]:
-		if ele[attributeNum] not in map_label:
-			map_label[ele[attributeNum]] = count
-			inverseMap[count] = ele[attributeNum]
-			count += 1
 		label.append(map_label[ele[attributeNum]])
 	thresholdNum = [0 for i in range(attributeNum)]
 	for i in range(attributeNum):
