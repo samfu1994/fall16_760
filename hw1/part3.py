@@ -1,12 +1,14 @@
-import re
 import math
 import csv
 import Queue
 import sys
 import copy
+import re
 import random
+import pydot
+from sets import Set
+import collections
 import matplotlib.pyplot as plt
-
 
 train_data = [];
 test_data = [];
@@ -15,16 +17,26 @@ thresholdNum = []
 attributeNum = 0;
 instanceNum = 0;
 nominal = {}
-stopThreshold = 4;
+stopThreshold = 2;
+trainSetSize = 1;
+originAttributes = 0
 thresholdMap = []
 MAX_INIT = -2147483648
 MIN_INIT = 2147483647
-median = 1
+median = 0
+RANDINT = 20000
 STOPMEG = 0
+inverseThresholdMap = {}
+inverseMap = []
+
+splitter = "|	"
+
+
 def getPrediction(node):
+	#get prediction according to the p or n which one has more instances currently
 	p = 0
 	n = 0
-	if node == 0:
+	if isinstance(node, int):
 		return 0
 	currentSet = node.currentSet
 	for i in currentSet:
@@ -33,6 +45,7 @@ def getPrediction(node):
 		else:
 			p += 1
 	if n > p:
+
 		return 0
 	elif n < p:
 		return 1
@@ -42,8 +55,8 @@ def getPrediction(node):
 
 class node:
 	def __init__(self, visited, currentSet, parent):
-		# print (" ")
-		# print ("size " + str(len(currentSet)))
+		#build tree using init function
+		# print "current set " + str(len(currentSet))
 		self.isLeaf = 0
 		self.visited = visited
 		self.index = -1
@@ -53,7 +66,13 @@ class node:
 		self.parent = parent
 		self.currentSet = currentSet
 		self.child = []
-		
+		self.p = 0
+		self.n = 0
+		for ele in currentSet:
+			if label[ele] == 0:
+				self.n += 1
+			else:
+				self.p += 1
 
 		if self.judgeStop(visited[:], currentSet):
 			self.isLeaf = 1
@@ -75,7 +94,7 @@ class node:
 			self.isNominal = 0
 
 
-		self.visited.append(self.index);
+		# self.visited.append(self.index);
 
 		if not self.isNominal:
 			[left, right] = self.getChild(currentSet, self.index, self.threshold)
@@ -83,17 +102,22 @@ class node:
 			self.child.append(node(self.visited[:], right, self))
 		else:
 			tmp_child = self.getChild(currentSet, self.index, self.threshold)
+			count = 0
 			for eachChild in tmp_child:
 				self.child.append(node(self.visited[:], eachChild, self))
+				count += 1
+
 		return
 
 	def predict(self, instance):
+		#api for testing set, return when reach leaf
 		if self.isLeaf:
 			return self.prediction
 		else:
 			branch = self.predict_helper(instance)
 			return self.child[branch].predict(instance)
 	def predict_helper(self, instance):
+		#call by predict when encouter an internal node, keep going downward
 		if self.isNominal:
 			return thresholdMap[self.index][instance[self.index]]
 		else:
@@ -101,7 +125,10 @@ class node:
 				return 1
 			else:
 				return 0
+
+
 	def getChild(self, currentSet, index, threshold):
+		#create child nodes according to threshold
 		if not self.isNominal:
 			left = []
 			right = []
@@ -112,14 +139,16 @@ class node:
 					left.append(i)
 			return [left, right]
 		else:
-			#let thresholdMap be a dict, nominal -> number
+			self.threshold = [0 for i in range(thresholdNum[self.index])]
 			childList = [[] for i in range(thresholdNum[self.index])]
 			for i in currentSet:
 				feature_belong_class = thresholdMap[index][train_data[i][index]]
 				childList[feature_belong_class].append(i)
+				self.threshold[feature_belong_class] = train_data[i][index]
 			return childList
 			
 	def inforgain(self, visited, currentSet):
+		#return the max information gain of this node, set the index and threshold of this node
 			max_val = MAX_INIT
 			max_mid = 0
 			index = -1
@@ -133,16 +162,23 @@ class node:
 				else:
 					val = self.helper_nominal(attribute_index, currentSet[:])
 					mid = 0
-				#val is negative
-				# print ("val is " + str(val))
-				if val > max_val:
+
+				# print "		feature is : " + originAttributes[attribute_index]
+				# print "		inforgain is : " + str(val)
+				# print "		mid is : " + str(mid)
+
+				#val is negative, plogp is smaller than 0 because p is smaller than 1
+				if val > max_val + 0.000000000000001:
 					max_val = val
 					index = attribute_index
 					max_mid = mid
+			# print "				select : " + str(originAttributes[index])
 			if nominal[index] == "NUMERIC":
 				self.threshold = max_mid
-				print "index  " + str(index)
-				print max_mid
+			else:
+				self.threshold = []
+				for i in range(thresholdNum[self.index]):
+					self.threshold.append(inverseThresholdMap[self.index][i]) 
 			#calculate self entropy to get the information gain by minus the entropy of child
 			p = 0
 			n = 0
@@ -183,9 +219,9 @@ class node:
 		#has only one class
 		l = []
 		for i in currentSet:
-			if l.count(label[i]) != 0:
+			if l.count(label[i]) == 0:
 				l.append(label[i])
-		if len(l) == 1:
+		if len(l) <= 1:
 			if STOPMEG:
 				print "has only one class remaining"
 			return 1
@@ -193,6 +229,7 @@ class node:
 		return 0
 
 	def numeric_info(self, vec, mid, currentSet):
+		#call by helper_numeric to calculate
 		length = len(vec)
 		falseNeg = 0
 		truePos = 0
@@ -213,26 +250,58 @@ class node:
 		pNeg = (trueNeg + falseNeg + 0.0) / length
 		pPos = 1 - pNeg
 
-		if pNeg == 1 or pPos == 1:
-			return 0
-
-
 		acc = 0.0
-		t1 = trueNeg / (trueNeg + falseNeg + 0.0)
+
+		if trueNeg + falseNeg == 0:
+			t1 = 0
+		else:
+			t1 = trueNeg / (trueNeg + falseNeg + 0.0)
 		t2 = 1 - t1
+
 		if t1 != 1 and t1 != 0:
-			acc += pNeg * ( t1 * math.log(t1) + t2 * math.log(t2) )
+			acc += pNeg * ( t1 * math.log(t1))
+		if t2 != 1 and t2 != 0:
+			acc +=  pNeg * ( t2 * math.log(t2))
 
 
-		t1 = truePos / (truePos + falsePos + 0.0)
+		if truePos + falsePos == 0:
+			t1 = 0
+		else:
+			t1 = truePos / (truePos + falsePos + 0.0)
 		t2 = 1 - t1
+
 		if t1 != 1 and t1 != 0:
-			acc += pPos * ( t1 * math.log(t1) + t2 * math.log(t2) )
+			acc += pPos * ( t1 * math.log(t1))
+		if t2 != 1 and t2 != 0:
+			acc += pPos * t2 * math.log(t2)
 		# -1 ~ 0
 		return acc
+	def getMidVec(self, valueSet):
+		l = len(valueSet)
+		s = Set()
+		res = []
+		pre_neg = -1
+		pre_pos = -1
+		for ele in valueSet:
+			if ele not in s:
+				s.add(ele)
+		s = sorted(s, key = lambda ele : ele[0])
+		for i in range(len(s)):
+			cur = s[i][0]
+			cur_label = s[i][1]
+			for j in range(i + 1, len(s)):
+				if cur == s[j][0]:
+					continue
+				if cur_label == s[j][1]:
+					if j < len(s) - 1 and s[j + 1][0] == s[j][0] and s[j + 1][1] != s[j][1]:
+						res.append((cur + s[j][0]) / 2)
+					break
+				res.append((cur + s[j][0]) / 2)
+
+		return res
+
 	def helper_numeric(self, index, currentSet):
 		#find the best split in a particular feature
-		# print ("numeric :: current set size is : " + str(len(currentSet)))
 
 		vec = []
 		for instance_index in currentSet:
@@ -241,34 +310,35 @@ class node:
 		min_val = MIN_INIT
 		max_val = MAX_INIT
 		max_entropy = -1
+		max_mid = -1
 
+		valueSet = [];
+		for ele in currentSet:
+			valueSet.append((train_data[ele][index], label[ele]))
+		valueSet.sort(key = lambda tup: tup[0]);
 
+		count = [0, 0]
+		for i in range(len(currentSet)):
+			count[label[currentSet[i]]] += 1
 		if median:
 			currentSet.sort()
 			tmp = currentSet[len(currentSet) / 2]
-			mid = train_data[tmp][index]
-			# print mid
+			max_mid = train_data[tmp][index]
 		else:
-			for i in currentSet:
-				cur = train_data[i][index]
-				if cur > max_val:
-					max_val = cur
-				if cur < min_val:
-					min_val = cur
-			mid = (max_val + min_val) / 2
-		max_entropy = self.numeric_info(vec, mid, currentSet)
+			midVec = self.getMidVec(valueSet)
+			ll = len(midVec)
+			for i in range(ll):
 
+				mid = midVec[i]
+				t = self.numeric_info(vec, mid, currentSet)
+				if max_entropy < t:
+					max_entropy = t
+					max_mid = mid
 
-		# for i in range(l - 1):
-		# 		instance_index = currentSet[i];
-		# 		second = currentSet[i + 1]
-		# 		# print str(instance_index) + "   " + str(second)
-		# 		mid = (train_data[instance_index][index] + train_data[second][index]) / 2
-		# 		max_entropy = max(max_entropy, self.numeric_info(vec, mid, currentSet) )
-
-		return [max_entropy, mid]
+		return [max_entropy, max_mid]
 
 	def getEachEntropy(self, index, row):
+		#call by nominal_info to calculate
 		p = 0
 		n = 0
 		for ele in row:
@@ -286,12 +356,11 @@ class node:
 			return t1 * math.log(t1) + t2 * math.log(t2)
 
 	def nominal_info(self, vec, index, currentSet):
+		#call by helper_nominal to calculate
 		acc = [[] for i in range( len(nominal[index]) )]
 		count = 0
 		l = len(vec)
 		for count in range(l):
-			# print "map is    "
-			# print "          " + str(thresholdMap[index])
 			cur = thresholdMap[index][vec[count]]
 			acc[cur].append(currentSet[count])
 		
@@ -305,151 +374,23 @@ class node:
 		return entropy
 
 	def helper_nominal(self, index, currentSet):
+		#calculate the entropy of each feature
 		vec = []
-		# print ("current set size is : " + str(len(currentSet)))
 		for instance_index in currentSet:
 			vec.append(train_data[instance_index][index])
 		l = len(currentSet)
 		entropy = self.nominal_info(vec, index, currentSet)
 		return entropy
 	
-def check(q):
-	if q.empty():
-		return
-	qq = Queue.Queue()
-
-	s = ""
-	while not q.empty():
-		tmp = q.get()
-		l = len(tmp.child)
-		if tmp.index == -1:
-			s += "NULL"
-		else:
-			s += str(tmp.index)
-		s += "    "
-		for i in range(l):
-			qq.put(tmp.child[i])
-	# print "      " + s
-	check(qq)
-def func(local_train_data, local_test_data, trainSetSize):
-	global train_data, test_data, label, stopThreshold , attributeNum, instanceNum, nominal, label, thresholdMap, thresholdNum
-	accuracy = []
-	copy_train_data = copy.deepcopy(local_train_data)
-	copy_test_data = copy.deepcopy(local_test_data)
-	for train_time in range(10):
-		train_data = copy.deepcopy(copy_train_data)
-		test_data = copy.deepcopy(copy_test_data)
-		label = []
-		attributeNum = len(train_data["attributes"]) - 1
-		if attributeNum < 0:
-			return
-
-		#thresholdmap store the map from value to int for each feature
-		thresholdMap = [{} for i in range(attributeNum)]
-
-		#nominal stores the values of each features
-		count = 0
-		cur_row = train_data["data"][0]
-		for i in range(attributeNum):
-			ele = cur_row[i]
-			if not type(ele) == str:
-				nominal[count] = "NUMERIC"
-			else:
-				nominal[count] = []
-				#train_data["attribuets"] is a tuple, two element, first name ,second list containing values
-				for instance in train_data["attributes"][count][1]:
-					if nominal[count].count(instance) == 0:
-						nominal[count].append(instance)
-			count += 1
-
-		#build thresholdmap
-		for ele in nominal:
-			count = 0
-			if nominal[ele] != "NUMERIC":
-				for item in nominal[ele]:
-					thresholdMap[ele][item] = count
-					count += 1
-
-		map_label = {}
-		count = 0
-
-		#map label to 0 and 1
-		
-		thresholdNum = [0 for i in range(attributeNum)]
-		for i in range(attributeNum):
-			if not type(train_data["data"][0][i]) is str:
-				continue
-			thresholdNum[i] = len(nominal[i])
-				
-		visited = []
-		
-
-		candidate_train_data = train_data["data"]
-		test_data = test_data["data"]
-
-		train_length = len(candidate_train_data)
-		selected = []
-		selectNum = 0
-		while selectNum < train_length * trainSetSize:
-			cur = random.randint(0, train_length - 1)
-			if selected.count(cur) == 0:
-				selected.append(cur)
-				selectNum += 1
-		tmp_train_data = []
-		for ele in selected:
-			tmp_train_data.append(candidate_train_data[ele])
-		train_data = tmp_train_data
-
-		for ele in train_data:
-			if ele[attributeNum] not in map_label:
-				map_label[ele[attributeNum]] = count
-				count += 1
-			label.append(map_label[ele[attributeNum]])
 
 
-		instanceNum = len(train_data)
-		currentSet = [i for i in range(instanceNum)]
-
-		root = node(visited, currentSet, 0)
-
-		# print ("-------------------------------------------------------------------------------------------")
-
-		q = Queue.Queue()
-		q.put(root)
-		check(q)
-
-
-		test_label = []
-		predict_label = []
-		for ele in test_data:
-			test_label.append(map_label[ele[attributeNum]])
-			predict_label.append(root.predict(ele))
-
-		test_num = len(test_label)
-		correct = 0
-		for i in range(test_num):
-			if test_label[i] == predict_label[i]:
-				correct += 1
-			# print str(predict_label[i]) +"      "  + str(test_label[i])
-		# print str(correct) +"      "  + str(test_num)
-		correct += 0.0
-		accuracy.append(correct / test_num)
-		if trainSetSize == 1:
-			break
-
-	sumAccuracy = 0
-	for ele in accuracy:
-		sumAccuracy += ele
-	avgAccuracy = sumAccuracy / len(accuracy)
-	# print "accuracy:"
-	# print sumAccuracy
-	return avgAccuracy
 def isfloat(value):
   try:
     float(value)
     return True
   except ValueError:
     return False
+
 def load_arff(data_name):
 	data = {}
 	data["attributes"] = []
@@ -488,6 +429,193 @@ def load_arff(data_name):
 
 	return data
 
+def printTree(node, layer):
+
+	if node.isNominal:
+		l = len(node.child)
+		base = ""
+		for i in range(layer):
+			base += splitter
+		for i in range(l):
+			s = ""
+			s += base
+			s += originAttributes[node.index]
+			s += " = "
+			s += str(node.threshold[i])
+			s += "  [" + str(node.child[i].n) + " " + str(node.child[i].p) + "]" 
+			if node.child[i].isLeaf:
+				s += " : " + inverseMap[node.child[i].prediction]
+				print s
+			else:
+				print s
+				printTree(node.child[i], layer + 1)
+
+	else:
+		s = ""
+		for i in range(layer):
+			s += splitter
+		s += originAttributes[node.index]
+		s += " <= "
+		tmp = str(node.threshold)
+		vv = tmp.split('.')
+		if len(vv[1]) < 6:
+			diff = 6 - len(vv[1])
+			for i in range(diff):
+				vv[1] += "0"
+		tmp = vv[0] + "." + vv[1]
+		s += tmp
+
+		s += "  [" + str(node.child[0].n) + " " + str(node.child[0].p) + "]" 
+		if node.child[0].isLeaf:
+			s += " : " + inverseMap[node.child[0].prediction]
+			print s
+		else:
+			print s
+			printTree(node.child[0], layer + 1)
+
+		s = ""
+		for i in range(layer):
+			s += splitter
+		s += originAttributes[node.index]
+		s += " > "
+		tmp = str(node.threshold)
+		vv = tmp.split('.')
+		if len(vv[1]) < 6:
+			diff = 6 - len(vv[1])
+			for i in range(diff):
+				vv[1] += "0"
+		tmp = vv[0] + "." + vv[1]
+		s += tmp
+
+		s += "  [" + str(node.child[1].n) + " " + str(node.child[1].p) + "]" 
+
+		if node.child[1].isLeaf:
+			s += " : " + inverseMap[node.child[1].prediction]
+			print s
+		else:
+			print s
+			printTree(node.child[1], layer + 1)
+
+	
+
+def func(local_train_data, local_test_data, trainSetSize):
+	#dt-learn.py 
+	global train_data, test_data, attributeNum, instanceNum, nominal, label, thresholdMap, thresholdNum
+	global stopThreshold, originAttributes, inverseMap, inverseThresholdMap
+	accuracy = []
+	copy_train_data = copy.deepcopy(local_train_data)
+	copy_test_data = copy.deepcopy(local_test_data)
+	if 1:
+		originAttributes = []
+		for ele in local_train_data["attributes"]:
+			originAttributes.append(ele[0])
+
+		attributeNum = len(local_train_data["attributes"]) - 1
+		if attributeNum < 0:
+			return
+
+		#thresholdmap store the map from value to int for each feature
+		thresholdMap = [{} for i in range(attributeNum)]
+		inverseThresholdMap =  [{} for i in range(attributeNum)]
+
+		#nominal stores the values of each features
+		nominal = {}
+		count = 0
+		cur_row = local_train_data["data"][0]
+		for i in range(attributeNum):
+			ele = cur_row[i]
+			if not type(ele) == str:
+				nominal[count] = "NUMERIC"
+			else:
+				nominal[count] = []
+				#local_train_data["attribuets"] is a tuple, two element, first name ,second list containing values
+				for instance in local_train_data["attributes"][count][1]:
+					if nominal[count].count(instance) == 0:
+						nominal[count].append(instance)
+			count += 1
+
+		for ele in nominal:
+			count = 0
+			if nominal[ele] != "NUMERIC":
+				for item in nominal[ele]:
+					thresholdMap[ele][item] = count
+					inverseThresholdMap[ele][count] = item
+					count += 1
+		map_label = {}
+		count = 0
+
+		#map label to 0 and 1
+		inverseMap = [0, 0]
+		inverseMap[0] = "negative"
+		inverseMap[1] = "positive"
+		map_label["positive"] = 1
+		map_label["negative"] = 0
+
+
+
+		thresholdNum = [0 for i in range(attributeNum)]
+		for i in range(attributeNum):
+			if not type(local_train_data["data"][0][i]) is str:
+				continue
+			thresholdNum[i] = len(nominal[i])
+				
+		visited = []
+
+		candidate_train_data = local_train_data["data"]
+		test_data = local_test_data["data"]
+		train_length = len(candidate_train_data)
+
+	for train_time in range(1):
+
+		selected = []
+		selectNum = 0
+		while selectNum < train_length * trainSetSize:
+			cur = random.randint(0, train_length - 1)
+			if selected.count(cur) == 0:
+				selected.append(cur)
+				selectNum += 1
+		tmp_train_data = []
+		for ele in selected:
+			tmp_train_data.append(candidate_train_data[ele])
+		train_data = tmp_train_data
+
+		label = []
+		for ele in train_data:
+			label.append(map_label[ele[attributeNum]])
+
+		instanceNum = len(train_data)
+		currentSet = [i for i in range(instanceNum)]
+
+		root = node(visited, currentSet, 0)
+
+		test_label = []
+		predict_label = []
+		for ele in test_data:
+			test_label.append(map_label[ele[attributeNum]])
+			predict_label.append(root.predict(ele))
+
+		test_num = len(test_label)
+		correct = 0
+		for i in range(test_num):
+			if test_label[i] == predict_label[i]:
+				correct += 1
+			# print str(i + 1) + ": Actual: " + str(inverseMap[test_label[i]])  +" Predicted: "  +  str(inverseMap[predict_label[i]])
+		# correct += 0.0
+		accuracy.append((correct + 0.0) / test_num)
+		if trainSetSize == 1:
+			break
+	maxacc = 0
+	sumacc = 0
+	minacc = 1
+	for ele in accuracy:
+		sumacc += ele
+		if ele > maxacc:
+			maxacc = ele
+		if ele < minacc:
+			minacc = ele
+	avgacc = sumacc / float(len(accuracy))
+	return avgacc
+
 def main():
 	global stopThreshold
 	#dt-learn.py 
@@ -504,7 +632,7 @@ def main():
 
 	sizeVec = [2, 5, 10, 20]
 
-	#train_data = load_arff('data/diabetes_train.arff')
+	# train_data = load_arff('data/diabetes_train.arff')
 	# test_data = load_arff('data/diabetes_test.arff')
 
 	train_data = load_arff('data/heart_train.arff')
@@ -518,6 +646,7 @@ def main():
 		tmp = func(train_data, test_data, 1)
 		avgAcc.append(tmp)
 	plt.subplot(111)
+	print avgAcc
 	plt.plot(sizeVec, avgAcc, label = "average")
 
 	plt.axis([1, 21, 0.5, 1])

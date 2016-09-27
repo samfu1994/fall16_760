@@ -535,10 +535,8 @@ def main():
 	#nominal stores the values of each features
 	count = 0
 	cur_row = train_data["data"][0]
-	name2index = {}
 	for i in range(attributeNum):
 		ele = cur_row[i]
-		name2index[train_data["attributes"][count][0]] = count
 		if not type(ele) == str:
 			nominal[count] = "NUMERIC"
 		else:
@@ -584,7 +582,7 @@ def main():
 
 	printTree(root, 0)
 
-
+	print "<Predictions for the Test Set Instances>"
 	test_label = []
 	predict_label = []
 	for ele in test_data:

@@ -1,8 +1,0 @@
-{u'thal': 
- {u'reversable_defect': 
-	{u'cp': {u'non_anginal': {}, u'asympt': {u'chol': {u'oldpeak': {u'restecg': {u'st_t_wave_abnormality': {}, u'left_vent_hyper': {}, u'normal': {}}}}}, u'atyp_angina': {}, u'typ_angina': {}}
-	},
-	u'fixed_defect': {}, 
-	u'normal': {u'cp': {u'non_anginal': {u'sex': {u'male': {u'fbs': {u't': {}, u'f': {}}}, u'female': {}}}, u'asympt': {u'ca': {}}, u'atyp_angina': {u'oldpeak': {}}, u'typ_angina': {}}}
- }
-}
