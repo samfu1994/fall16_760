@@ -11,6 +11,7 @@ train_set = []
 test_set = []
 response = [] # train set label
 K = 1
+kk = [0 for i in range(3)]
 TEST = 0
 def isfloat(x):
 	try:
@@ -101,7 +102,6 @@ def predict(cur):
 		mean = 0
 		while count != 0:
 			tup = heappop(h)
-			# print type(tup[1]) 
 			mean += tup[1]
 
 			count -= 1
@@ -118,16 +118,67 @@ def main():
 		test_name = "yeast_test.arff"
 		# train_name = "wine_train.arff"
 		# test_name = "wine_test.arff"
+		kk[0] = 1
+		kk[1] = 5
+		kk[2] = 10   
 	else:
 		argv = sys.argv;
 		argvNum = len(argv)
 		train_name = argv[1]
 		test_name = argv[2]
-		K = int(argv[3])
+		kk[0] = int(argv[3])
+		kk[1] = int(argv[4])
+		kk[2] = int(argv[5])
 
-	train_set = load_arff(train_name, 1)
-	test_set = load_arff(test_name, 0)
-	featureNum = len(feature_name)
+	accVec = []
+
+	origin_train_set = load_arff(train_name, 1)
+	origin_test_set = load_arff(test_name, 0)
+
+	cross_acc = [0 for i in range(3)]
+	cross_error = [0 for i in range(3)]
+
+	for k in range(3): # for k1 k2 k3
+		correct = 0
+		error = 0;
+		prediction = []
+		K = kk[k]
+		for i in range(len(origin_train_set)): # cross validation
+			cur_index = i
+			if cur_index > 0:
+				train_set = origin_train_set[0 : cur_index]
+				train_set += origin_train_set[cur_index + 1 : ]
+			else:
+				train_set = origin_train_set[cur_index + 1 : ]
+			test_set = origin_train_set[cur_index]
+
+			featureNum = len(feature_name)
+
+			prediction.append(predict(test_set))
+			if isClassify:
+				if response[i] == prediction[i]:
+					correct += 1
+			else:
+				error += abs(prediction[i] - response[i])
+
+		cross_acc[k] = float(correct) / len(origin_train_set)
+		cross_error[k] = float(error) / len(origin_train_set)
+
+
+	maxval = 0
+	minerr = 100000000
+	for i in range(3):
+		if isClassify:
+			if cross_acc[i] > maxval:
+				maxval = cross_acc[i]
+				K = kk[i]
+		else:
+			if cross_error[i] < minerr:
+				minerr = cross_error[i]
+				K = kk[i]
+
+	train_set = origin_train_set
+	test_set = origin_test_set
 
 	prediction = []
 
@@ -151,6 +202,7 @@ def main():
 		print "correct : " + str(correct) + " total : " + str(len(prediction))
 	else:
 		print "mean absolute error: " + str(error) + " total : "+ str(len(prediction))
+
 
 if __name__ == "__main__":
 	main()

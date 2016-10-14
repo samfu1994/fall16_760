@@ -11,7 +11,7 @@ train_set = []
 test_set = []
 response = [] # train set label
 K = 1
-TEST = 0
+TEST = 1
 def isfloat(x):
 	try:
 		float(x)
@@ -66,16 +66,22 @@ def load_arff(data_name, isTrain):
 def predict(cur):
 	l = len(train_set) 
 	h = []
+	# print cur
 	for i in range(l):
 		cur_dis = 0
+		# print train_set[i]
 		for j in range(featureNum):
 			tmp = cur[j] - train_set[i][j]
 			cur_dis += tmp * tmp
+			# print cur[j], train_set[i][j]
+		# print "this : " + str(cur_dis) + "   " + response[i]
 		tup = (-cur_dis, response[i])
 		if len(h) < K:
 			heappush(h, tup)
 		else:
 			heappushpop(h, tup)
+		# print h
+	# print ""
 	res = {} # map from class to number
 	count = K
 	if isClassify:
@@ -90,7 +96,6 @@ def predict(cur):
 		maxApperance = 0
 		
 		count = 0
-		cur_prediction = 0
 		for ele in res.items():
 			count+= 1
 			if ele[1] > maxApperance:
@@ -109,7 +114,7 @@ def predict(cur):
 
 		return mean
 def main():
-	# load_arff("wine_train.arff")
+	Kvec = [1, 5, 10, 20, 30]
 	global K, train_set, test_set, featureNum
 
 
@@ -119,38 +124,36 @@ def main():
 		# train_name = "wine_train.arff"
 		# test_name = "wine_test.arff"
 	else:
-		argv = sys.argv;
+		argv = sys.argc;
 		argvNum = len(argv)
 		train_name = argv[1]
 		test_name = argv[2]
 		K = int(argv[3])
-
 	train_set = load_arff(train_name, 1)
 	test_set = load_arff(test_name, 0)
+
 	featureNum = len(feature_name)
-
-	prediction = []
-
-	for i in range(len(test_set)):
-		prediction.append(predict(test_set[i]))
-
-	print K
-	correct = 0
-	error = 0
-	for i in range(len(prediction)):
-		if isClassify:
-			if actual[i] == prediction[i]:
-				correct += 1
-		else:
-			error += abs(prediction[i] - actual[i])
-
-		print "predicted: " + str(prediction[i]) + "   actual: " + str(actual[i])
-
-	error /= len(prediction)
-	if isClassify:
-		print "correct : " + str(correct) + " total : " + str(len(prediction))
-	else:
-		print "mean absolute error: " + str(error) + " total : "+ str(len(prediction))
+	accVec  = []
+	errVec = []
+	for i in range(len(Kvec)):
+		K = Kvec[i]
+		prediction = []
+		for i in range(len(test_set)):
+			prediction.append(predict(test_set[i]))
+		# print type(train_set[0][0])
+		print K
+		correct = 0
+		error = 0
+		for i in range(len(prediction)):
+			if isClassify:
+				if actual[i] == prediction[i]:
+					correct += 1
+			else:
+				error += abs(prediction[i] - actual[i])
+		errVec.append(float(error) / len(prediction))
+		accVec.append(float(correct) / len(prediction) )
+	print accVec
+	print errVec
 
 if __name__ == "__main__":
 	main()
