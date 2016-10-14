@@ -137,9 +137,6 @@ class node:
 				feature_belong_class = thresholdMap[index][train_data[i][index]]
 				childList[feature_belong_class].append(i)
 				self.threshold[feature_belong_class] = train_data[i][index]
-			for i in range(len(self.threshold)):
-				if self.threshold[i] == 0:
-					self.threshold[i] = nominal[index][i]
 			return childList
 			
 	def inforgain(self, visited, currentSet):
@@ -267,75 +264,28 @@ class node:
 			acc += pPos * t2 * math.log(t2)
 		# -1 ~ 0
 		return acc
-
-	# def getMidVec(self, valueSet):
-	# 	#get the split point of a numeric feature
-	# 	l = len(valueSet)
-	# 	s = Set()
-	# 	res = []
-	# 	pre_neg = -1
-	# 	pre_pos = -1
-	# 	for ele in valueSet:
-	# 		if ele not in s:
-	# 			s.add(ele)
-	# 	s = sorted(s, key = lambda ele : ele[0])
-	# 	for i in range(len(s)):
-	# 		cur = s[i][0]
-	# 		cur_label = s[i][1]
-	# 		for j in range(i + 1, len(s)):
-	# 			if cur == s[j][0]:
-	# 				continue
-	# 			if cur_label == s[j][1]:
-	# 				if j < len(s) - 1 and s[j + 1][0] == s[j][0] and s[j + 1][1] != s[j][1]:
-	# 					res.append((cur + s[j][0]) / 2)
-	# 				break
-	# 			res.append((cur + s[j][0]) / 2)
-
-	# 	return res
-
-	# def helper_numeric(self, index, currentSet):
-	# 	#find the best split in a particular feature
-	# 	vec = []
-	# 	for instance_index in currentSet:
-	# 		vec.append(train_data[instance_index][index])
-	# 	l = len(currentSet)
-	# 	min_val = MIN_INIT
-	# 	max_val = MAX_INIT
-	# 	max_entropy = -1
-	# 	max_mid = -1
-
-	# 	valueSet = [];
-	# 	for ele in currentSet:
-	# 		valueSet.append((train_data[ele][index], label[ele]))
-	# 	valueSet.sort(key = lambda tup: tup[0]);
-
-	# 	count = [0, 0]
-	# 	for i in range(len(currentSet)):
-	# 		count[label[currentSet[i]]] += 1
-	# 	if median:
-	# 		currentSet.sort()
-	# 		tmp = currentSet[len(currentSet) / 2]
-	# 		max_mid = train_data[tmp][index]
-	# 	else:
-	# 		midVec = self.getMidVec(valueSet)
-	# 		ll = len(midVec)
-	# 		for i in range(ll):
-
-	# 			mid = midVec[i]
-	# 			t = self.numeric_info(vec, mid, currentSet)
-	# 			if max_entropy < t:
-	# 				max_entropy = t
-	# 				max_mid = mid
-
-	# 	return [max_entropy, max_mid]
-
-
 	def getMidVec(self, valueSet):
 		#get the split point of a numeric feature
-		res = []
 		l = len(valueSet)
-		for i in range(l - 1):
-			res.append((valueSet[i] + valueSet[i + 1]) / 2)
+		s = Set()
+		res = []
+		pre_neg = -1
+		pre_pos = -1
+		for ele in valueSet:
+			if ele not in s:
+				s.add(ele)
+		s = sorted(s, key = lambda ele : ele[0])
+		for i in range(len(s)):
+			cur = s[i][0]
+			cur_label = s[i][1]
+			for j in range(i + 1, len(s)):
+				if cur == s[j][0]:
+					continue
+				if cur_label == s[j][1]:
+					if j < len(s) - 1 and s[j + 1][0] == s[j][0] and s[j + 1][1] != s[j][1]:
+						res.append((cur + s[j][0]) / 2)
+					break
+				res.append((cur + s[j][0]) / 2)
 
 		return res
 
@@ -352,9 +302,8 @@ class node:
 
 		valueSet = [];
 		for ele in currentSet:
-			if valueSet.count(train_data[ele][index]) == 0:
-				valueSet.append(train_data[ele][index])
-		valueSet.sort();
+			valueSet.append((train_data[ele][index], label[ele]))
+		valueSet.sort(key = lambda tup: tup[0]);
 
 		count = [0, 0]
 		for i in range(len(currentSet)):
@@ -481,9 +430,9 @@ def printTree(node, layer):
 			s += originAttributes[node.index]
 			s += " = "
 			s += str(node.threshold[i])
-			s += " [" + str(node.child[i].n) + " " + str(node.child[i].p) + "]" 
+			s += "  [" + str(node.child[i].n) + " " + str(node.child[i].p) + "]" 
 			if node.child[i].isLeaf:
-				s += ": " + inverseMap[node.child[i].prediction]
+				s += " : " + inverseMap[node.child[i].prediction]
 				print s
 			else:
 				print s
@@ -504,9 +453,9 @@ def printTree(node, layer):
 		tmp = vv[0] + "." + vv[1]
 		s += tmp
 
-		s += " [" + str(node.child[0].n) + " " + str(node.child[0].p) + "]" 
+		s += "  [" + str(node.child[0].n) + " " + str(node.child[0].p) + "]" 
 		if node.child[0].isLeaf:
-			s += ": " + inverseMap[node.child[0].prediction]
+			s += " : " + inverseMap[node.child[0].prediction]
 			print s
 		else:
 			print s
@@ -526,10 +475,10 @@ def printTree(node, layer):
 		tmp = vv[0] + "." + vv[1]
 		s += tmp
 
-		s += " [" + str(node.child[1].n) + " " + str(node.child[1].p) + "]" 
+		s += "  [" + str(node.child[1].n) + " " + str(node.child[1].p) + "]" 
 
 		if node.child[1].isLeaf:
-			s += ": " + inverseMap[node.child[1].prediction]
+			s += " : " + inverseMap[node.child[1].prediction]
 			print s
 		else:
 			print s
