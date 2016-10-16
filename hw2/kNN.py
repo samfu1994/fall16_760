@@ -11,6 +11,7 @@ train_set = []
 test_set = []
 response = [] # train set label
 K = 1
+name2index = {}
 TEST = 0
 def isfloat(x):
 	try:
@@ -20,7 +21,7 @@ def isfloat(x):
 		return False
 
 def load_arff(data_name, isTrain):
-	global feature_name, isClassify, response, actual
+	global feature_name, isClassify, response, actual, name2index
 	data = []
 	enterData = 0
 	with open(data_name) as file:
@@ -55,7 +56,10 @@ def load_arff(data_name, isTrain):
 					if len(vec) > 0 and vec[0] == "@attribute":
 						if vec[1] == "class" :
 							isClassify = 1
-							# class_name = vec[2:]
+							class_name = vec[2:]
+							for k in range(len(class_name)):
+								name2index[class_name[k]] = k
+
 						elif vec[1] != "response":
 							feature_name.append(vec[1])
 
@@ -76,25 +80,28 @@ def predict(cur):
 			heappush(h, tup)
 		else:
 			heappushpop(h, tup)
-	res = {} # map from class to number
+		#store nearest K points
+
+	res = {} # map from class to number, class : (appearance, distance)
 	count = K
 	if isClassify:
 		while count != 0:
 			tup = heappop(h)
 
 			if tup[1] in res:
-				res[tup[1]] += 1
+				res[tup[1]][0] += 1 #appearance
+				res[tup[1]][1] = -tup[0] #distance
 			else:
-				res[tup[1]] = 1
+				res[tup[1]] = [1, -tup[0]]
 			count -= 1
+
 		maxApperance = 0
-		
-		count = 0
+		minDis = 100000000
 		cur_prediction = 0
 		for ele in res.items():
-			count+= 1
-			if ele[1] > maxApperance:
-				maxApperance = ele[1]
+			if ele[1][0] > maxApperance or (ele[1][0] == maxApperance and ele[1][1] < minDis) or (ele[1][0] == maxApperance and ele[1][1] == minDis and name2index[ele[0]] < name2index[cur_prediction]):
+				maxApperance = ele[1][0]
+				minDis = ele[1][1]
 				cur_prediction = ele[0]
 		return cur_prediction
 	else:
@@ -111,7 +118,6 @@ def predict(cur):
 def main():
 	# load_arff("wine_train.arff")
 	global K, train_set, test_set, featureNum
-
 
 	if TEST:
 		train_name = "yeast_train.arff"
@@ -134,7 +140,7 @@ def main():
 	for i in range(len(test_set)):
 		prediction.append(predict(test_set[i]))
 
-	print K
+	print "k value : " + str(K)
 	correct = 0
 	error = 0
 	for i in range(len(prediction)):
@@ -143,14 +149,19 @@ def main():
 				correct += 1
 		else:
 			error += abs(prediction[i] - actual[i])
-
-		print "predicted: " + str(prediction[i]) + "   actual: " + str(actual[i])
+		if not isClassify:
+			print "Predicted value : " + str("{0:.6f}".format(prediction[i])) + "	Actual value : " + str("{0:.6f}".format(actual[i]))
+		else:
+			print "Predicted class : " + str(prediction[i]) + "	Actual class : " + str(actual[i])
 
 	error /= len(prediction)
 	if isClassify:
-		print "correct : " + str(correct) + " total : " + str(len(prediction))
+		print "Number of correctly classified instances : " + str(correct)
+		print "Total number of instances : " + str(len(prediction))
+		print "Accuracy : " + str(float(correct) / len(prediction))
 	else:
-		print "mean absolute error: " + str(error) + " total : "+ str(len(prediction))
+		print "Mean absolute error : " + str("{0:.16f}".format(error))
+		print "Total number of instances : " + str(len(prediction))
 
 if __name__ == "__main__":
 	main()

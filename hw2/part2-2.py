@@ -1,6 +1,8 @@
 import re
 import sys
 from heapq import *
+import matplotlib.pyplot as plt
+
 
 feature_name = []
 actual = [] #test set label
@@ -152,6 +154,15 @@ def main():
 		error /= len(prediction)
 		accVec.append(error)
 	print accVec
+
+	plt.subplot(111)
+	plt.plot(Kvec, accVec, label = "mean absolute error")
+	plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+           ncol=2, mode="expand", borderaxespad=0.)
+	plt.axis([0, 31, 0, 1])
+	plt.ylabel("mean absolute error")
+	plt.xlabel("K")
+	plt.show()
 
 if __name__ == "__main__":
 	main()

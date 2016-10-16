@@ -185,7 +185,8 @@ def main():
 	for i in range(len(test_set)):
 		prediction.append(predict(test_set[i]))
 
-	print K
+
+	print "k value : " + str(K)
 	correct = 0
 	error = 0
 	for i in range(len(prediction)):
@@ -194,14 +195,19 @@ def main():
 				correct += 1
 		else:
 			error += abs(prediction[i] - actual[i])
-
-		print "predicted: " + str(prediction[i]) + "   actual: " + str(actual[i])
+		if not isClassify:
+			print "Predicted value : " + str("{0:.6f}".format(prediction[i])) + "	Actual value : " + str("{0:.6f}".format(actual[i]))
+		else:
+			print "Predicted class : " + str(prediction[i]) + "	Actual class : " + str(actual[i])
 
 	error /= len(prediction)
 	if isClassify:
-		print "correct : " + str(correct) + " total : " + str(len(prediction))
+		print "Number of correctly classified instances : " + str(correct)
+		print "Total number of instances : " + str(len(prediction))
+		print "Accuracy : " + str(float(correct) / len(prediction))
 	else:
-		print "mean absolute error: " + str(error) + " total : "+ str(len(prediction))
+		print "Mean absolute error : " + str("{0:.16f}".format(error))
+		print "Total number of instances : " + str(len(prediction))
 
 
 if __name__ == "__main__":
