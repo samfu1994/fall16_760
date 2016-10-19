@@ -10,9 +10,11 @@ featureNum = 0;
 train_set = []
 test_set = []
 response = [] # train set label
-K = 1
+instance2index = {}
+K = 3
 name2index = {}
-TEST = 0
+TEST = 1
+
 def isfloat(x):
 	try:
 		float(x)
@@ -79,7 +81,12 @@ def predict(cur):
 		if len(h) < K:
 			heappush(h, tup)
 		else:
-			heappushpop(h, tup)
+			tmp_top = heappop(h)
+			if tmp_top[0] >= tup[0]: #negative number
+				heappush(h, tmp_top)
+			else:
+				heappush(h, tup)
+			# heappushpop(h, tup)
 		#store nearest K points
 
 	res = {} # map from class to number, class : (appearance, distance)
@@ -99,7 +106,9 @@ def predict(cur):
 		minDis = 100000000
 		cur_prediction = 0
 		for ele in res.items():
-			if ele[1][0] > maxApperance or (ele[1][0] == maxApperance and ele[1][1] < minDis) or (ele[1][0] == maxApperance and ele[1][1] == minDis and name2index[ele[0]] < name2index[cur_prediction]):
+			# if ele[1][0] > maxApperance or (ele[1][0] == maxApperance and ele[1][1] < minDis) or (ele[1][0] == maxApperance and ele[1][1] == minDis and name2index[ele[0]] < name2index[cur_prediction]):
+			if ele[1][0] > maxApperance \
+			or (ele[1][0] == maxApperance and name2index[ele[0]] < name2index[cur_prediction]):
 				maxApperance = ele[1][0]
 				minDis = ele[1][1]
 				cur_prediction = ele[0]
@@ -158,10 +167,11 @@ def main():
 	if isClassify:
 		print "Number of correctly classified instances : " + str(correct)
 		print "Total number of instances : " + str(len(prediction))
-		print "Accuracy : " + str(float(correct) / len(prediction))
+		format_precision = float(correct) / len(prediction)
+		print ("Accuracy : " + str("{0:.16f}".format(format_precision))),
 	else:
 		print "Mean absolute error : " + str("{0:.16f}".format(error))
-		print "Total number of instances : " + str(len(prediction))
+		print ("Total number of instances : " + str(len(prediction))),
 
 if __name__ == "__main__":
 	main()
