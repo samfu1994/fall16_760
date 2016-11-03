@@ -9,9 +9,7 @@ thal = normal [84 19]
 |	|	|	|	oldpeak <= 0.300000 [3 3]
 |	|	|	|	|	cp = typ_angina [0 0]: negative
 |	|	|	|	|	cp = asympt [0 2]: positive
-|	|	|	|	|	cp = non_anginal [1 1]
-|	|	|	|	|	|	age <= 44.000000 [1 0]: negative
-|	|	|	|	|	|	age > 44.000000 [0 1]: positive
+|	|	|	|	|	cp = non_anginal [1 1]: negative
 |	|	|	|	|	cp = atyp_angina [2 0]: negative
 |	|	|	|	oldpeak > 0.300000 [6 0]: negative
 |	|	|	trestbps > 113.500000 [47 1]
@@ -33,9 +31,7 @@ thal = normal [84 19]
 |	|	|	|	|	cp = atyp_angina [2 0]: negative
 |	|	|	|	sex = male [1 7]
 |	|	|	|	|	age <= 65.500000 [0 5]: positive
-|	|	|	|	|	age > 65.500000 [1 2]
-|	|	|	|	|	|	age <= 66.500000 [1 0]: negative
-|	|	|	|	|	|	age > 66.500000 [0 2]: positive
+|	|	|	|	|	age > 65.500000 [1 2]: positive
 thal = reversable_defect [20 67]
 |	cp = typ_angina [3 1]
 |	|	oldpeak <= 0.700000 [0 1]: positive
@@ -43,9 +39,7 @@ thal = reversable_defect [20 67]
 |	cp = asympt [5 53]
 |	|	oldpeak <= 0.650000 [5 10]
 |	|	|	chol <= 240.500000 [5 2]
-|	|	|	|	chol <= 192.000000 [1 2]
-|	|	|	|	|	age <= 62.000000 [0 2]: positive
-|	|	|	|	|	age > 62.000000 [1 0]: negative
+|	|	|	|	chol <= 192.000000 [1 2]: positive
 |	|	|	|	chol > 192.000000 [4 0]: negative
 |	|	|	chol > 240.500000 [0 8]: positive
 |	|	oldpeak > 0.650000 [0 43]: positive
@@ -79,7 +73,7 @@ thal = reversable_defect [20 67]
 13: Actual: negative Predicted: positive
 14: Actual: negative Predicted: positive
 15: Actual: negative Predicted: negative
-16: Actual: negative Predicted: positive
+16: Actual: negative Predicted: negative
 17: Actual: negative Predicted: negative
 18: Actual: negative Predicted: negative
 19: Actual: negative Predicted: positive
@@ -167,4 +161,4 @@ thal = reversable_defect [20 67]
 101: Actual: positive Predicted: positive
 102: Actual: positive Predicted: positive
 103: Actual: positive Predicted: negative
-Number of correctly classified: 70 Total number of test instances: 103
+Number of correctly classified: 71 Total number of test instances: 103

@@ -1,7 +1,6 @@
 import re
 import sys
 from heapq import *
-import matplotlib.pyplot as plt
 import math
 
 feature_name = []
@@ -15,7 +14,8 @@ response = [] # train set label
 instance2index = {}
 K = 3
 name2index = {}
-TEST = 1
+TEST = 0
+
 def isfloat(x):
 	try:
 		float(x)
@@ -126,11 +126,9 @@ def predict(cur):
 		mean /= K
 
 		return mean
-
 def main():
-	Kvec = [1, 5, 10, 20, 30]
+	# load_arff("wine_train.arff")
 	global K, train_set, test_set, featureNum
-
 
 	if TEST:
 		train_name = "yeast_train.arff"
@@ -138,45 +136,44 @@ def main():
 		# train_name = "wine_train.arff"
 		# test_name = "wine_test.arff"
 	else:
-		argv = sys.argc;
+		argv = sys.argv;
 		argvNum = len(argv)
 		train_name = argv[1]
 		test_name = argv[2]
 		K = int(argv[3])
+
 	train_set = load_arff(train_name, 1)
 	test_set = load_arff(test_name, 0)
-
 	featureNum = len(feature_name)
-	accVec  = []
-	errVec = []
-	for i in range(len(Kvec)):
-		K = Kvec[i]
-		prediction = []
-		for i in range(len(test_set)):
-			prediction.append(predict(test_set[i]))
-		# print type(train_set[0][0])
-		print K
-		correct = 0
-		error = 0
-		for i in range(len(prediction)):
-			if isClassify:
-				if actual[i] == prediction[i]:
-					correct += 1
-			else:
-				error += abs(prediction[i] - actual[i])
-		errVec.append(float(error) / len(prediction))
-		accVec.append(float(correct) / len(prediction) )
-	print accVec
-	print errVec
 
-	plt.subplot(111)
-	plt.plot(Kvec, accVec, label = "accuracy")
-	plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
-           ncol=2, mode="expand", borderaxespad=0.)
-	plt.axis([0, 31, 0.3, 0.7])
-	plt.ylabel("accuracy")
-	plt.xlabel("K")
-	plt.show()
+	prediction = []
+
+	for i in range(len(test_set)):
+		prediction.append(predict(test_set[i]))
+
+	print "k value : " + str(K)
+	correct = 0
+	error = 0
+	for i in range(len(prediction)):
+		if isClassify:
+			if actual[i] == prediction[i]:
+				correct += 1
+		else:
+			error += abs(prediction[i] - actual[i])
+		if not isClassify:
+			print "Predicted value : " + str("{0:.6f}".format(prediction[i])) + "	Actual value : " + str("{0:.6f}".format(actual[i]))
+		else:
+			print "Predicted class : " + str(prediction[i]) + "	Actual class : " + str(actual[i])
+
+	error /= len(prediction)
+	if isClassify:
+		print "Number of correctly classified instances : " + str(correct)
+		print "Total number of instances : " + str(len(prediction))
+		format_precision = float(correct) / len(prediction)
+		print ("Accuracy : " + str("{0:.16f}".format(format_precision))),
+	else:
+		print "Mean absolute error : " + str("{0:.16f}".format(error))
+		print ("Total number of instances : " + str(len(prediction))),
 
 if __name__ == "__main__":
 	main()

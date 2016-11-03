@@ -1,6 +1,7 @@
 import re
 import sys
 from heapq import *
+import math
 
 kk = [0 for i in range(3)]
 feature_name = []
@@ -10,10 +11,11 @@ isClassify = 0
 featureNum = 0;
 train_set = []
 test_set = []
-response = [] # train set label
+origin_response = [] # train set label
+response = []
 K = 3
 name2index = {}
-TEST = 1
+TEST = 0
 
 def isfloat(x):
 	try:
@@ -23,22 +25,22 @@ def isfloat(x):
 		return False
 
 def load_arff(data_name, isTrain):
-	global feature_name, isClassify, response, actual, name2index
+	global feature_name, isClassify, actual, name2index, origin_response
 	data = []
 	enterData = 0
 	with open(data_name) as file:
 		count = 0
 		for line in file:
-			vec = re.split("[ ,}{\n']+", line)
+			vec = re.split("[ ,}{\n\r']+", line)
 			if enterData:
 				#reach data section
 				row = []
 				vec = filter(None, vec)
 				if isTrain:
 					if isfloat(vec[-1]):
-						response.append(float(vec[-1]))
+						origin_response.append(float(vec[-1]))
 					else:
-						response.append(vec[-1])
+						origin_response.append(vec[-1])
 				else:
 					if isfloat(vec[-1]):
 						actual.append(float(vec[-1]))
@@ -76,6 +78,7 @@ def predict(cur):
 		for j in range(featureNum):
 			tmp = cur[j] - train_set[i][j]
 			cur_dis += tmp * tmp
+		cur_dis = math.sqrt(cur_dis)
 		tup = (-cur_dis, response[i])
 		if len(h) < K:
 			heappush(h, tup)
@@ -103,7 +106,7 @@ def predict(cur):
 
 		maxApperance = 0
 		minDis = 100000000
-		cur_prediction = 0
+		cur_prediction = -1
 		for ele in res.items():
 			# if ele[1][0] > maxApperance or (ele[1][0] == maxApperance and ele[1][1] < minDis) or (ele[1][0] == maxApperance and ele[1][1] == minDis and name2index[ele[0]] < name2index[cur_prediction]):
 			if ele[1][0] > maxApperance \
@@ -125,7 +128,7 @@ def predict(cur):
 		return mean
 def main():
 	# load_arff("wine_train.arff")
-	global K, train_set, test_set, featureNum
+	global K, train_set, test_set, featureNum, response
 
 
 	if TEST:
@@ -149,13 +152,12 @@ def main():
 
 	origin_train_set = load_arff(train_name, 1)
 	origin_test_set = load_arff(test_name, 0)
-
 	cross_acc = [0 for i in range(3)]
 	cross_error = [0 for i in range(3)]
 
 	for k in range(3): # for k1 k2 k3
 		correct = 0
-		error = 0;
+		error = 0
 		prediction = []
 		K = kk[k]
 		for i in range(len(origin_train_set)): # cross validation
@@ -163,18 +165,23 @@ def main():
 			if cur_index > 0:
 				train_set = origin_train_set[0 : cur_index]
 				train_set += origin_train_set[cur_index + 1 : ]
+				response = origin_response[0 : cur_index]
+				response += origin_response[cur_index + 1 : ]
 			else:
 				train_set = origin_train_set[cur_index + 1 : ]
+				response = origin_response[cur_index + 1 :]
+
 			test_set = origin_train_set[cur_index]
 
 			featureNum = len(feature_name)
 
 			prediction.append(predict(test_set))
+		for i in range(len(origin_train_set)): # cross validation
 			if isClassify:
-				if response[i] == prediction[i]:
+				if origin_response[i] == prediction[i]:
 					correct += 1
 			else:
-				error += abs(prediction[i] - response[i])
+				error += abs(prediction[i] - origin_response[i])
 
 		cross_acc[k] = float(correct) / len(origin_train_set)
 		cross_error[k] = float(error) / len(origin_train_set)
@@ -182,7 +189,7 @@ def main():
 		if isClassify:
 			print "Number of incorrectly classified instances for k =", kk[k] , ":", str(len(origin_train_set) - correct)
 		else:
-			print "Mean absolute error for k =", kk[k], ":", str("{0:.16f}".format(cross_error[k]))
+			print "Mean absolute error for k =", kk[k], ":", str("{0:.16f}".format(cross_error[k])).rstrip('0')
 
 	maxval = 0
 	minerr = 100000000
@@ -199,6 +206,7 @@ def main():
 	print "Best k value :", K
 	train_set = origin_train_set
 	test_set = origin_test_set
+	response = origin_response
 
 	prediction = []
 
@@ -224,9 +232,9 @@ def main():
 	if isClassify:
 		print "Number of correctly classified instances : " + str(correct)
 		print "Total number of instances : " + str(len(prediction))
-		print "Accuracy : " + str(float(correct) / len(prediction))
+		print "Accuracy : " + str("{0:.16f}".format(float(correct) / len(prediction))).rstrip('0')
 	else:
-		print "Mean absolute error : " + str("{0:.16f}".format(error))
+		print "Mean absolute error :", str("{0:.16f}".format(error)).rstrip('0')
 		print "Total number of instances : " + str(len(prediction))
 
 

@@ -1,0 +1,90 @@
+physician-fee-freeze = n [222 4]
+|	adoption-of-the-budget-resolution = n [23 4]
+|	|	synfuels-corporation-cutback = n [11 4]
+|	|	|	superfund-right-to-sue = n [6 4]
+|	|	|	|	mx-missile = n [1 3]
+|	|	|	|	|	handicapped-infants = n [0 3]: republican
+|	|	|	|	|	handicapped-infants = y [1 0]: democrat
+|	|	|	|	mx-missile = y [5 1]
+|	|	|	|	|	handicapped-infants = n [3 0]: democrat
+|	|	|	|	|	handicapped-infants = y [2 1]: democrat
+|	|	|	superfund-right-to-sue = y [5 0]: democrat
+|	|	synfuels-corporation-cutback = y [12 0]: democrat
+|	adoption-of-the-budget-resolution = y [199 0]: democrat
+physician-fee-freeze = y [10 143]
+|	synfuels-corporation-cutback = n [2 126]
+|	|	duty-free-exports = n [0 115]: republican
+|	|	duty-free-exports = y [2 11]
+|	|	|	immigration = n [2 2]
+|	|	|	|	anti-satellite-test-ban = n [2 1]: democrat
+|	|	|	|	anti-satellite-test-ban = y [0 1]: republican
+|	|	|	immigration = y [0 9]: republican
+|	synfuels-corporation-cutback = y [8 17]
+|	|	mx-missile = n [4 16]
+|	|	|	adoption-of-the-budget-resolution = n [1 14]
+|	|	|	|	superfund-right-to-sue = n [1 1]: republican
+|	|	|	|	superfund-right-to-sue = y [0 13]: republican
+|	|	|	adoption-of-the-budget-resolution = y [3 2]
+|	|	|	|	water-project-cost-sharing = n [0 2]: republican
+|	|	|	|	water-project-cost-sharing = y [3 0]: democrat
+|	|	mx-missile = y [4 1]
+|	|	|	adoption-of-the-budget-resolution = n [3 0]: democrat
+|	|	|	adoption-of-the-budget-resolution = y [1 1]: democrat
+<Predictions for the Test Set Instances>
+  1: Actual: republican Predicted: republican
+  2: Actual: democrat Predicted: democrat
+  3: Actual: democrat Predicted: democrat
+  4: Actual: democrat Predicted: republican
+  5: Actual: democrat Predicted: democrat
+  6: Actual: democrat Predicted: democrat
+  7: Actual: democrat Predicted: democrat
+  8: Actual: democrat Predicted: democrat
+  9: Actual: democrat Predicted: democrat
+ 10: Actual: democrat Predicted: republican
+ 11: Actual: democrat Predicted: democrat
+ 12: Actual: democrat Predicted: democrat
+ 13: Actual: democrat Predicted: democrat
+ 14: Actual: republican Predicted: republican
+ 15: Actual: republican Predicted: democrat
+ 16: Actual: democrat Predicted: democrat
+ 17: Actual: democrat Predicted: democrat
+ 18: Actual: democrat Predicted: democrat
+ 19: Actual: democrat Predicted: democrat
+ 20: Actual: democrat Predicted: democrat
+ 21: Actual: republican Predicted: republican
+ 22: Actual: republican Predicted: republican
+ 23: Actual: republican Predicted: republican
+ 24: Actual: republican Predicted: republican
+ 25: Actual: republican Predicted: republican
+ 26: Actual: republican Predicted: republican
+ 27: Actual: republican Predicted: republican
+ 28: Actual: democrat Predicted: democrat
+ 29: Actual: democrat Predicted: republican
+ 30: Actual: democrat Predicted: democrat
+ 31: Actual: republican Predicted: republican
+ 32: Actual: republican Predicted: republican
+ 33: Actual: democrat Predicted: democrat
+ 34: Actual: republican Predicted: republican
+ 35: Actual: republican Predicted: republican
+ 36: Actual: democrat Predicted: democrat
+ 37: Actual: democrat Predicted: democrat
+ 38: Actual: republican Predicted: republican
+ 39: Actual: democrat Predicted: democrat
+ 40: Actual: democrat Predicted: democrat
+ 41: Actual: democrat Predicted: democrat
+ 42: Actual: republican Predicted: republican
+ 43: Actual: democrat Predicted: democrat
+ 44: Actual: democrat Predicted: democrat
+ 45: Actual: democrat Predicted: democrat
+ 46: Actual: democrat Predicted: democrat
+ 47: Actual: democrat Predicted: democrat
+ 48: Actual: democrat Predicted: democrat
+ 49: Actual: republican Predicted: republican
+ 50: Actual: democrat Predicted: democrat
+ 51: Actual: democrat Predicted: democrat
+ 52: Actual: republican Predicted: republican
+ 53: Actual: democrat Predicted: democrat
+ 54: Actual: republican Predicted: republican
+ 55: Actual: republican Predicted: republican
+ 56: Actual: republican Predicted: republican
+Number of correctly classified: 52 Total number of test instances: 56

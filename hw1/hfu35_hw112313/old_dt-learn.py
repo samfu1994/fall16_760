@@ -605,7 +605,7 @@ def main():
 	# map_label["positive"] = 1
 	# map_label["negative"] = 0
 
-	# print map_label
+	print map_label
 
 	#store label of each instance
 	for ele in train_data["data"]:

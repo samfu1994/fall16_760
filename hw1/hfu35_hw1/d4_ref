@@ -18,9 +18,7 @@ plas <= 127.500000 [342 78]
 |	|	|	|	|	|	|	|	age <= 25.500000 [5 4]
 |	|	|	|	|	|	|	|	|	age <= 22.500000 [3 0]: negative
 |	|	|	|	|	|	|	|	|	age > 22.500000 [2 4]
-|	|	|	|	|	|	|	|	|	|	pres <= 69.000000 [2 1]
-|	|	|	|	|	|	|	|	|	|	|	pres <= 55.000000 [0 1]: positive
-|	|	|	|	|	|	|	|	|	|	|	pres > 55.000000 [2 0]: negative
+|	|	|	|	|	|	|	|	|	|	pres <= 69.000000 [2 1]: negative
 |	|	|	|	|	|	|	|	|	|	pres > 69.000000 [0 3]: positive
 |	|	|	|	|	|	|	|	age > 25.500000 [4 0]: negative
 |	|	|	|	|	|	insu > 38.000000 [45 0]: negative
@@ -32,9 +30,7 @@ plas <= 127.500000 [342 78]
 |	|	|	|	|	|	|	mass <= 34.850000 [0 4]: positive
 |	|	|	|	|	|	|	mass > 34.850000 [5 3]
 |	|	|	|	|	|	|	|	plas <= 114.000000 [1 3]
-|	|	|	|	|	|	|	|	|	preg <= 1.000000 [1 1]
-|	|	|	|	|	|	|	|	|	|	plas <= 102.000000 [1 0]: negative
-|	|	|	|	|	|	|	|	|	|	plas > 102.000000 [0 1]: positive
+|	|	|	|	|	|	|	|	|	preg <= 1.000000 [1 1]: positive
 |	|	|	|	|	|	|	|	|	preg > 1.000000 [0 2]: positive
 |	|	|	|	|	|	|	|	plas > 114.000000 [4 0]: negative
 |	|	|	|	|	pres > 64.500000 [19 3]
@@ -56,9 +52,7 @@ plas <= 127.500000 [342 78]
 |	|	|	|	|	plas <= 28.500000 [0 1]: positive
 |	|	|	|	|	plas > 28.500000 [26 1]
 |	|	|	|	|	|	preg <= 11.500000 [24 0]: negative
-|	|	|	|	|	|	preg > 11.500000 [2 1]
-|	|	|	|	|	|	|	mass <= 31.250000 [0 1]: positive
-|	|	|	|	|	|	|	mass > 31.250000 [2 0]: negative
+|	|	|	|	|	|	preg > 11.500000 [2 1]: negative
 |	|	|	|	plas > 93.500000 [49 30]
 |	|	|	|	|	skin <= 27.500000 [23 24]
 |	|	|	|	|	|	pres <= 84.000000 [15 23]
@@ -68,9 +62,7 @@ plas <= 127.500000 [342 78]
 |	|	|	|	|	|	|	|	|	mass > 27.950000 [10 18]
 |	|	|	|	|	|	|	|	|	|	mass <= 29.650000 [4 1]
 |	|	|	|	|	|	|	|	|	|	|	plas <= 111.000000 [3 0]: negative
-|	|	|	|	|	|	|	|	|	|	|	plas > 111.000000 [1 1]
-|	|	|	|	|	|	|	|	|	|	|	|	preg <= 4.500000 [0 1]: positive
-|	|	|	|	|	|	|	|	|	|	|	|	preg > 4.500000 [1 0]: negative
+|	|	|	|	|	|	|	|	|	|	|	plas > 111.000000 [1 1]: negative
 |	|	|	|	|	|	|	|	|	|	mass > 29.650000 [6 17]
 |	|	|	|	|	|	|	|	|	|	|	preg <= 7.000000 [2 13]
 |	|	|	|	|	|	|	|	|	|	|	|	age <= 33.000000 [2 2]
@@ -80,9 +72,7 @@ plas <= 127.500000 [342 78]
 |	|	|	|	|	|	|	|	|	|	|	preg > 7.000000 [4 4]
 |	|	|	|	|	|	|	|	|	|	|	|	pedi <= 0.396000 [4 2]
 |	|	|	|	|	|	|	|	|	|	|	|	|	plas <= 107.000000 [3 0]: negative
-|	|	|	|	|	|	|	|	|	|	|	|	|	plas > 107.000000 [1 2]
-|	|	|	|	|	|	|	|	|	|	|	|	|	|	plas <= 121.000000 [0 2]: positive
-|	|	|	|	|	|	|	|	|	|	|	|	|	|	plas > 121.000000 [1 0]: negative
+|	|	|	|	|	|	|	|	|	|	|	|	|	plas > 107.000000 [1 2]: positive
 |	|	|	|	|	|	|	|	|	|	|	|	pedi > 0.396000 [0 2]: positive
 |	|	|	|	|	|	|	|	age > 56.000000 [2 0]: negative
 |	|	|	|	|	|	|	pedi > 0.468000 [3 0]: negative
@@ -118,9 +108,7 @@ plas <= 127.500000 [342 78]
 |	|	|	|	|	|	|	|	skin > 35.500000 [6 3]
 |	|	|	|	|	|	|	|	|	pedi <= 0.862500 [2 3]
 |	|	|	|	|	|	|	|	|	|	preg <= 4.000000 [0 2]: positive
-|	|	|	|	|	|	|	|	|	|	preg > 4.000000 [2 1]
-|	|	|	|	|	|	|	|	|	|	|	plas <= 37.000000 [0 1]: positive
-|	|	|	|	|	|	|	|	|	|	|	plas > 37.000000 [2 0]: negative
+|	|	|	|	|	|	|	|	|	|	preg > 4.000000 [2 1]: negative
 |	|	|	|	|	|	|	|	|	pedi > 0.862500 [4 0]: negative
 |	|	|	|	preg > 8.500000 [0 7]: positive
 plas > 127.500000 [93 155]
@@ -148,9 +136,7 @@ plas > 127.500000 [93 155]
 |	|	|	|	|	|	|	plas <= 151.000000 [1 0]: negative
 |	|	|	|	|	|	|	plas > 151.000000 [0 6]: positive
 |	|	|	|	|	|	mass > 27.250000 [5 2]
-|	|	|	|	|	|	|	pedi <= 0.281000 [1 2]
-|	|	|	|	|	|	|	|	preg <= 8.000000 [0 2]: positive
-|	|	|	|	|	|	|	|	preg > 8.000000 [1 0]: negative
+|	|	|	|	|	|	|	pedi <= 0.281000 [1 2]: positive
 |	|	|	|	|	|	|	pedi > 0.281000 [4 0]: negative
 |	|	|	age > 61.000000 [4 0]: negative
 |	mass > 29.950000 [50 133]
@@ -163,14 +149,10 @@ plas > 127.500000 [93 155]
 |	|	|	|	|	|	|	plas <= 131.500000 [2 0]: negative
 |	|	|	|	|	|	|	plas > 131.500000 [2 4]
 |	|	|	|	|	|	|	|	pres <= 61.000000 [0 3]: positive
-|	|	|	|	|	|	|	|	pres > 61.000000 [2 1]
-|	|	|	|	|	|	|	|	|	preg <= 6.000000 [2 0]: negative
-|	|	|	|	|	|	|	|	|	preg > 6.000000 [0 1]: positive
+|	|	|	|	|	|	|	|	pres > 61.000000 [2 1]: negative
 |	|	|	|	|	pres > 69.000000 [22 7]
 |	|	|	|	|	|	pres <= 79.000000 [12 1]
-|	|	|	|	|	|	|	preg <= 0.500000 [2 1]
-|	|	|	|	|	|	|	|	plas <= 141.500000 [2 0]: negative
-|	|	|	|	|	|	|	|	plas > 141.500000 [0 1]: positive
+|	|	|	|	|	|	|	preg <= 0.500000 [2 1]: negative
 |	|	|	|	|	|	|	preg > 0.500000 [10 0]: negative
 |	|	|	|	|	|	pres > 79.000000 [10 6]
 |	|	|	|	|	|	|	skin <= 16.500000 [5 0]: negative
@@ -191,9 +173,7 @@ plas > 127.500000 [93 155]
 |	|	|	|	|	|	|	pres > 61.000000 [3 0]: negative
 |	|	|	|	|	pres > 73.000000 [8 1]
 |	|	|	|	|	|	preg <= 3.000000 [7 0]: negative
-|	|	|	|	|	|	preg > 3.000000 [1 1]
-|	|	|	|	|	|	|	preg <= 5.000000 [0 1]: positive
-|	|	|	|	|	|	|	preg > 5.000000 [1 0]: negative
+|	|	|	|	|	|	preg > 3.000000 [1 1]: negative
 |	|	|	|	age > 30.000000 [2 31]
 |	|	|	|	|	plas <= 152.500000 [0 27]: positive
 |	|	|	|	|	plas > 152.500000 [2 4]
@@ -241,7 +221,7 @@ plas > 127.500000 [93 155]
 14: Actual: positive Predicted: positive
 15: Actual: positive Predicted: positive
 16: Actual: positive Predicted: negative
-17: Actual: positive Predicted: negative
+17: Actual: positive Predicted: positive
 18: Actual: positive Predicted: negative
 19: Actual: positive Predicted: positive
 20: Actual: positive Predicted: positive
@@ -325,4 +305,4 @@ plas > 127.500000 [93 155]
 98: Actual: negative Predicted: negative
 99: Actual: negative Predicted: negative
 100: Actual: negative Predicted: negative
-Number of correctly classified: 68 Total number of test instances: 100
+Number of correctly classified: 69 Total number of test instances: 100

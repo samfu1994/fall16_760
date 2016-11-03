@@ -1,0 +1,202 @@
+plas <= 127.500000 [342 78]
+|	age <= 28.500000 [220 20]
+|	|	mass <= 31.400000 [130 2]
+|	|	|	preg <= 7.000000 [130 1]
+|	|	|	|	pedi <= 0.672000 [111 0]: negative
+|	|	|	|	pedi > 0.672000 [19 1]
+|	|	|	|	|	pedi <= 0.686500 [0 1]: positive
+|	|	|	|	|	pedi > 0.686500 [19 0]: negative
+|	|	|	preg > 7.000000 [0 1]: positive
+|	|	mass > 31.400000 [90 18]
+|	|	|	pres <= 37.000000 [0 2]: positive
+|	|	|	pres > 37.000000 [90 16]
+|	|	|	|	pedi <= 0.509500 [62 6]
+|	|	|	|	|	mass <= 45.400000 [62 4]
+|	|	|	|	|	|	insu <= 38.000000 [17 4]
+|	|	|	|	|	|	|	plas <= 94.000000 [8 0]: negative
+|	|	|	|	|	|	|	plas > 94.000000 [9 4]: negative
+|	|	|	|	|	|	insu > 38.000000 [45 0]: negative
+|	|	|	|	|	mass > 45.400000 [0 2]: positive
+|	|	|	|	pedi > 0.509500 [28 10]
+|	|	|	|	|	pres <= 64.500000 [9 7]: negative
+|	|	|	|	|	pres > 64.500000 [19 3]
+|	|	|	|	|	|	pres <= 79.000000 [13 0]: negative
+|	|	|	|	|	|	pres > 79.000000 [6 3]: negative
+|	age > 28.500000 [122 58]
+|	|	mass <= 26.350000 [34 1]
+|	|	|	mass <= 9.650000 [0 1]: positive
+|	|	|	mass > 9.650000 [34 0]: negative
+|	|	mass > 26.350000 [88 57]
+|	|	|	pedi <= 0.625000 [75 32]
+|	|	|	|	plas <= 93.500000 [26 2]
+|	|	|	|	|	plas <= 28.500000 [0 1]: positive
+|	|	|	|	|	plas > 28.500000 [26 1]
+|	|	|	|	|	|	preg <= 11.500000 [24 0]: negative
+|	|	|	|	|	|	preg > 11.500000 [2 1]: negative
+|	|	|	|	plas > 93.500000 [49 30]
+|	|	|	|	|	skin <= 27.500000 [23 24]
+|	|	|	|	|	|	pres <= 84.000000 [15 23]
+|	|	|	|	|	|	|	pedi <= 0.468000 [12 23]
+|	|	|	|	|	|	|	|	age <= 56.000000 [10 23]
+|	|	|	|	|	|	|	|	|	mass <= 27.950000 [0 5]: positive
+|	|	|	|	|	|	|	|	|	mass > 27.950000 [10 18]
+|	|	|	|	|	|	|	|	|	|	mass <= 29.650000 [4 1]: negative
+|	|	|	|	|	|	|	|	|	|	mass > 29.650000 [6 17]
+|	|	|	|	|	|	|	|	|	|	|	preg <= 7.000000 [2 13]: positive
+|	|	|	|	|	|	|	|	|	|	|	preg > 7.000000 [4 4]: positive
+|	|	|	|	|	|	|	|	age > 56.000000 [2 0]: negative
+|	|	|	|	|	|	|	pedi > 0.468000 [3 0]: negative
+|	|	|	|	|	|	pres > 84.000000 [8 1]: negative
+|	|	|	|	|	skin > 27.500000 [26 6]
+|	|	|	|	|	|	plas <= 104.000000 [12 0]: negative
+|	|	|	|	|	|	plas > 104.000000 [14 6]
+|	|	|	|	|	|	|	pres <= 89.000000 [14 4]: negative
+|	|	|	|	|	|	|	pres > 89.000000 [0 2]: positive
+|	|	|	pedi > 0.625000 [13 25]
+|	|	|	|	preg <= 8.500000 [13 18]
+|	|	|	|	|	pedi <= 0.698500 [0 5]: positive
+|	|	|	|	|	pedi > 0.698500 [13 13]
+|	|	|	|	|	|	mass <= 33.100000 [3 8]: positive
+|	|	|	|	|	|	mass > 33.100000 [10 5]: negative
+|	|	|	|	preg > 8.500000 [0 7]: positive
+plas > 127.500000 [93 155]
+|	mass <= 29.950000 [43 22]
+|	|	plas <= 145.000000 [30 6]
+|	|	|	preg <= 1.500000 [12 0]: negative
+|	|	|	preg > 1.500000 [18 6]
+|	|	|	|	insu <= 132.500000 [13 6]: negative
+|	|	|	|	insu > 132.500000 [5 0]: negative
+|	|	plas > 145.000000 [13 16]
+|	|	|	age <= 61.000000 [9 16]
+|	|	|	|	age <= 25.500000 [3 0]: negative
+|	|	|	|	age > 25.500000 [6 16]
+|	|	|	|	|	pres <= 72.000000 [0 8]: positive
+|	|	|	|	|	pres > 72.000000 [6 8]: positive
+|	|	|	age > 61.000000 [4 0]: negative
+|	mass > 29.950000 [50 133]
+|	|	plas <= 157.500000 [39 62]
+|	|	|	pedi <= 0.400500 [26 20]
+|	|	|	|	mass <= 45.550000 [26 14]
+|	|	|	|	|	pres <= 69.000000 [4 7]: positive
+|	|	|	|	|	pres > 69.000000 [22 7]
+|	|	|	|	|	|	pres <= 79.000000 [12 1]: negative
+|	|	|	|	|	|	pres > 79.000000 [10 6]: negative
+|	|	|	|	mass > 45.550000 [0 6]: positive
+|	|	|	pedi > 0.400500 [13 42]
+|	|	|	|	age <= 30.000000 [11 11]
+|	|	|	|	|	pres <= 73.000000 [3 10]: positive
+|	|	|	|	|	pres > 73.000000 [8 1]: negative
+|	|	|	|	age > 30.000000 [2 31]
+|	|	|	|	|	plas <= 152.500000 [0 27]: positive
+|	|	|	|	|	plas > 152.500000 [2 4]: positive
+|	|	plas > 157.500000 [11 71]
+|	|	|	insu <= 629.500000 [9 71]
+|	|	|	|	age <= 44.500000 [4 56]
+|	|	|	|	|	pedi <= 0.306500 [4 13]: positive
+|	|	|	|	|	pedi > 0.306500 [0 43]: positive
+|	|	|	|	age > 44.500000 [5 15]
+|	|	|	|	|	preg <= 7.500000 [5 9]: positive
+|	|	|	|	|	preg > 7.500000 [0 6]: positive
+|	|	|	insu > 629.500000 [2 0]: negative
+<Predictions for the Test Set Instances>
+1: Actual: positive Predicted: positive
+2: Actual: positive Predicted: positive
+3: Actual: positive Predicted: positive
+4: Actual: positive Predicted: negative
+5: Actual: positive Predicted: positive
+6: Actual: positive Predicted: positive
+7: Actual: positive Predicted: positive
+8: Actual: positive Predicted: negative
+9: Actual: positive Predicted: positive
+10: Actual: positive Predicted: negative
+11: Actual: positive Predicted: negative
+12: Actual: positive Predicted: negative
+13: Actual: positive Predicted: negative
+14: Actual: positive Predicted: positive
+15: Actual: positive Predicted: negative
+16: Actual: positive Predicted: negative
+17: Actual: positive Predicted: positive
+18: Actual: positive Predicted: negative
+19: Actual: positive Predicted: positive
+20: Actual: positive Predicted: positive
+21: Actual: positive Predicted: negative
+22: Actual: positive Predicted: negative
+23: Actual: positive Predicted: positive
+24: Actual: positive Predicted: positive
+25: Actual: positive Predicted: negative
+26: Actual: positive Predicted: positive
+27: Actual: positive Predicted: positive
+28: Actual: positive Predicted: negative
+29: Actual: positive Predicted: positive
+30: Actual: positive Predicted: positive
+31: Actual: positive Predicted: negative
+32: Actual: positive Predicted: negative
+33: Actual: positive Predicted: positive
+34: Actual: positive Predicted: positive
+35: Actual: positive Predicted: negative
+36: Actual: negative Predicted: negative
+37: Actual: negative Predicted: negative
+38: Actual: negative Predicted: negative
+39: Actual: negative Predicted: positive
+40: Actual: negative Predicted: negative
+41: Actual: negative Predicted: negative
+42: Actual: negative Predicted: negative
+43: Actual: negative Predicted: negative
+44: Actual: negative Predicted: positive
+45: Actual: negative Predicted: negative
+46: Actual: negative Predicted: negative
+47: Actual: negative Predicted: negative
+48: Actual: negative Predicted: negative
+49: Actual: negative Predicted: negative
+50: Actual: negative Predicted: negative
+51: Actual: negative Predicted: negative
+52: Actual: negative Predicted: negative
+53: Actual: negative Predicted: positive
+54: Actual: negative Predicted: positive
+55: Actual: negative Predicted: positive
+56: Actual: negative Predicted: negative
+57: Actual: negative Predicted: positive
+58: Actual: negative Predicted: positive
+59: Actual: negative Predicted: negative
+60: Actual: negative Predicted: negative
+61: Actual: negative Predicted: negative
+62: Actual: negative Predicted: negative
+63: Actual: negative Predicted: negative
+64: Actual: negative Predicted: positive
+65: Actual: negative Predicted: negative
+66: Actual: negative Predicted: negative
+67: Actual: negative Predicted: positive
+68: Actual: negative Predicted: negative
+69: Actual: negative Predicted: negative
+70: Actual: negative Predicted: negative
+71: Actual: negative Predicted: negative
+72: Actual: negative Predicted: negative
+73: Actual: negative Predicted: negative
+74: Actual: negative Predicted: negative
+75: Actual: negative Predicted: positive
+76: Actual: negative Predicted: negative
+77: Actual: negative Predicted: negative
+78: Actual: negative Predicted: negative
+79: Actual: negative Predicted: negative
+80: Actual: negative Predicted: negative
+81: Actual: negative Predicted: negative
+82: Actual: negative Predicted: negative
+83: Actual: negative Predicted: negative
+84: Actual: negative Predicted: negative
+85: Actual: negative Predicted: positive
+86: Actual: negative Predicted: negative
+87: Actual: negative Predicted: negative
+88: Actual: negative Predicted: negative
+89: Actual: negative Predicted: negative
+90: Actual: negative Predicted: negative
+91: Actual: negative Predicted: negative
+92: Actual: negative Predicted: positive
+93: Actual: negative Predicted: negative
+94: Actual: negative Predicted: negative
+95: Actual: negative Predicted: negative
+96: Actual: negative Predicted: negative
+97: Actual: negative Predicted: negative
+98: Actual: negative Predicted: negative
+99: Actual: negative Predicted: negative
+100: Actual: negative Predicted: negative
+Number of correctly classified: 72 Total number of test instances: 100

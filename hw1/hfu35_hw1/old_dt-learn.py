@@ -26,6 +26,8 @@ RANDINT = 20000
 STOPMEG = 0
 inverseThresholdMap = {}
 inverseMap = []
+map_label = {}
+
 
 splitter = "|	"
 
@@ -431,6 +433,7 @@ def isfloat(value):
     return False
 
 def load_arff(data_name):
+	global map_label
 	data = {}
 	data["attributes"] = []
 	data["data"] = []
@@ -440,7 +443,7 @@ def load_arff(data_name):
 		for line in file:
 			if enterData:
 				row = []
-				vec = re.split("[,\n ]+", line)
+				vec = re.split("[, \n\r]+", line)
 				l = len(vec)
 				for i in range(l):
 					if isfloat(vec[i]) and vec[i] != "":
@@ -449,8 +452,12 @@ def load_arff(data_name):
 						row.append(vec[i])
 				data["data"].append(row)
 				continue
-			vec = re.split("[ ,}\n']+", line)
+			vec = re.split("[ ,}\n\r']+", line)
 			if len(vec) > 0 and vec[0] == "@attribute":
+				if vec[1] == "class":
+					map_label[vec[3]] = 0
+					map_label[vec[4]] = 1
+
 				if vec[2] == "{":
 					values = []
 					for i in range(2, len(vec)):
@@ -589,15 +596,16 @@ def main():
 				thresholdMap[ele][item] = count
 				inverseThresholdMap[ele][count] = item
 				count += 1
-	map_label = {}
 	count = 0
 
 	#map label to 0 and 1
 	inverseMap = [0, 0]
-	inverseMap[0] = "negative"
-	inverseMap[1] = "positive"
-	map_label["positive"] = 1
-	map_label["negative"] = 0
+	for ele in map_label:
+		inverseMap[map_label[ele]] = ele
+	# map_label["positive"] = 1
+	# map_label["negative"] = 0
+
+	print map_label
 
 	#store label of each instance
 	for ele in train_data["data"]:
