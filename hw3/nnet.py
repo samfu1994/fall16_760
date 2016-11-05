@@ -11,7 +11,7 @@ index2feature = [] #index to feature index
 class2index = {} 
 index2class = [] # index to class 0 or 1
 isNominal = {} #name to true or false
-TEST = 1
+TEST = 0
 feature_num = 0
 each_feature_value_num = {}
 feature_values = {} #possible value in each feature
@@ -29,9 +29,10 @@ def myrand():
 	return a
 
 def sigmoid(x):
-  return 1 / (1 + math.exp(-x))
+	return 1 / (1 + math.exp(-x))
 
 def train(instance, w1, w2, isPredict):
+	global l
 	input_vec = []
 
 	#build input layer vector
@@ -42,8 +43,8 @@ def train(instance, w1, w2, isPredict):
 		if isNominal[feature_name]:
 			cur_feature_len = each_feature_value_num[feature_name]
 			cur_index = feature_values[feature_name].index(cur)
-			tmp_vec = [0 for i in range(cur_feature_len)]
-			tmp_vec[cur_index] = 1
+			tmp_vec = [0.0 for i in range(cur_feature_len)]
+			tmp_vec[cur_index] = 1.0
 			input_vec.extend(tmp_vec)
 
 		else:
@@ -53,20 +54,20 @@ def train(instance, w1, w2, isPredict):
 		print "not match input dimension"
 		return
 
-	input_vec.append(1) #bias
-
+	input_vec.append(1.0) #bias
 
 	#build hidden_vec
-	hidden_vec_input = [0 for i in range(h)]
-	hidden_vec_output = [0 for i in range(h)]
+	hidden_vec_input = [0.0 for i in range(h)]
+	hidden_vec_output = [0.0 for i in range(h)]
 	for i in range(input_unit_num + 1):
 		for j in range(h):
 			hidden_vec_input[j] += w1[i][j] * input_vec[i]
 
 	for i in range(h):
 		hidden_vec_output[i] = sigmoid(hidden_vec_input[i])
+	# print hidden_vec_output
 
-	hidden_vec_output.append(1)
+	hidden_vec_output.append(1.0)
 
 
 	output_in = 0
@@ -75,36 +76,42 @@ def train(instance, w1, w2, isPredict):
 
 	output_out = sigmoid(output_in)
 	label = class2index[instance[feature_num]]
-	diff = label - output_out
+
+	cross_entropy = - label * np.log(output_out) - (1 - label) * np.log(1 - output_out)
+	delta_cross_entropy = (output_out - label)
+
 
 	if isPredict:
-		return diff
+		prediction = -1
+
+		if output_out - 0.5 > 0.00001:
+			prediction = 1
+		else:
+			prediction = 0
+		# return prediction
+		if prediction == label:
+			return 1
+		else:
+			return 0
 
 	#back propagation
-	hidden_diff = [0 for i in range(h + 1)]
+	delta_hidden = [0.0 for i in range(h + 1)]
+
 	for i in range(h + 1):
-		hidden_diff[i] = diff * w2[i]
-
-
+		delta_hidden[i] = delta_cross_entropy * hidden_vec_output[i]
+		w2[i] -= l * delta_hidden[i]
 
 	#update weight   input -> hidden
 	for j in range(h):
-		deriv = (1 - sigmoid(hidden_vec_input[j])) * sigmoid(hidden_vec_input[j])
+		deriv_hidden = (1 - hidden_vec_output[j]) * hidden_vec_output[j]
 		for i in range(input_unit_num + 1):
-			w1[i][j] += l * hidden_diff[j] * input_vec[i] * deriv 
+			w1[i][j] -= l * delta_hidden[j] * deriv_hidden * input_vec[i]
 
+	return cross_entropy
 
-
-	#update weight  hidden -> output
-	deriv =  (1 - sigmoid(output_in)) * sigmoid(output_in)
-	for i in range(h + 1):
-		w2[i] += l * hidden_vec_output[i] * diff * deriv
-
-
-
-	return diff
 
 def train_direct_link(instance, w1, isPredict):
+	global l
 	input_vec = []
 
 	#build input layer vector
@@ -115,8 +122,8 @@ def train_direct_link(instance, w1, isPredict):
 		if isNominal[feature_name]:
 			cur_feature_len = each_feature_value_num[feature_name]
 			cur_index = feature_values[feature_name].index(cur)
-			tmp_vec = [0 for i in range(cur_feature_len)]
-			tmp_vec[cur_index] = 1
+			tmp_vec = [0.0 for i in range(cur_feature_len)]
+			tmp_vec[cur_index] = 1.0
 			input_vec.extend(tmp_vec)
 
 		else:
@@ -126,9 +133,7 @@ def train_direct_link(instance, w1, isPredict):
 		print "not match input dimension"
 		return
 
-	input_vec.append(1) #bias
-	#build hidden_vec
-
+	input_vec.append(1.0) #bias
 
 	output_in = 0
 	for i in range(input_unit_num + 1):
@@ -136,29 +141,36 @@ def train_direct_link(instance, w1, isPredict):
 
 	output_out = sigmoid(output_in)
 	label = class2index[instance[feature_num]]
-	diff = label - output_out
+
+	cross_entropy = - label * np.log(output_out) - (1 - label) * np.log(1 - output_out)
+	delta_cross_entropy = (output_out - label)
+
 
 	if isPredict:
-		return diff
+		prediction = -1
+		if output_out - 0.5 > 0.00001:
+			prediction = 1
+		else:
+			prediction = 0
+		# return prediction
+		if prediction == label:
+			return 1
+		else:
+			return 0
 
 	#back propagation
-
-
-	#update weight  hidden -> output
-	deriv =  (1 - sigmoid(output_in)) * sigmoid(output_in)
 	for i in range(input_unit_num + 1):
-		w1[i] += l * input_vec[i] * diff * deriv
+		w1[i] -= l * delta_cross_entropy * input_vec[i]
 
-
-	return diff
+	return cross_entropy
 
 
 def main():
 	global feature2index, index2feature, isNominal, feature_values, feature_num, input_unit_num
 	global l, h , e
-	l = 0.1
-	h = 20
-	e = 100
+	l = 0.0001
+	h = 10
+	e = 50
 	train_file = "heart_train.arff"
 	test_file = "heart_test.arff"
 	if not TEST:
@@ -213,13 +225,16 @@ def main():
 				error += train_direct_link(instance, w1, 0)
 			print error
 
+		correct = 0
 		for instance in test_data:
-			error = train_direct_link(instance, w1, 1)
+			correct += train_direct_link(instance, w1, 1)
+			# print "actual: ", str(class2index[instance[feature_num]]), "  prediction : ", str(correct)
 	else:
 		w1 = [[myrand() for i in range(h)] for i in range(input_unit_num + 1)]
 		#(input + 1) * hidden
 		w2 = [myrand() for i in range(h + 1)]
 		#(hidden + 1) *1
+
 
 		for i in range(e):
 			error = 0
@@ -227,11 +242,13 @@ def main():
 				error += train(instance, w1, w2, 0)
 			print error
 
+		correct = 0
 		for instance in test_data:
-			error = train(instance, w1, w2, 1)
-		print error
+			correct += train(instance, w1, w2, 1)
+			# print "actual: ", str(class2index[instance[feature_num]]), "  prediction : ", str(correct)
+	
 
-		
+	print correct, len(test_data) - correct
 
 
 
