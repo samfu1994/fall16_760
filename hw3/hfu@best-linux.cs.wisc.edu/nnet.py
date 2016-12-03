@@ -11,7 +11,7 @@ index2feature = [] #index to feature index
 class2index = {} 
 index2class = [] # index to class 0 or 1
 isNominal = {} #name to true or false
-TEST = 1
+TEST = 0
 feature_num = 0
 each_feature_value_num = {}
 feature_values = {} #possible value in each feature
@@ -50,7 +50,7 @@ def train(instance, w1, w2, isPredict):
 			input_vec.append(float(instance[i]))
 
 	if len(input_vec) != input_unit_num:
-		print "not match input dimension"
+		# print "not match input dimension"
 		return
 
 	input_vec.append(1.0) #bias
@@ -143,7 +143,7 @@ def train_direct_link(instance, w1, isPredict):
 			input_vec.append(float(instance[i]))
 
 	if len(input_vec) != input_unit_num:
-		print "not match input dimension"
+		# print "not match input dimension"
 		return
 
 	input_vec.append(1.0) #bias
@@ -190,7 +190,7 @@ def train_direct_link(instance, w1, isPredict):
 def main():
 	global feature2index, index2feature, isNominal, feature_values, feature_num, input_unit_num
 	global l, h , e
-	l = 0.1
+	l = 0.0001
 	h = 10
 	e = 50
 	train_file = "heart_train.arff"
@@ -210,7 +210,7 @@ def main():
 
 	#first shuffle the mat
 	np.random.shuffle(train_data)
-	np.random.shuffle(test_data)
+	# np.random.shuffle(test_data)
 	
 
 	i = 0
@@ -278,14 +278,16 @@ def main():
 				tmp_err, tmp_correct = train_direct_link (instance, w1, 1)
 				err += tmp_err
 				correct += tmp_correct
-			print str(i + 1) + "\t" + str("{0:.6f}".format(err)) + "\t" + str(correct) + "\t" + str(len(train_data) - correct)
+			# print str(i + 1) + "\t" + str("{0:.6f}".format(err)) + "\t" + str(correct) + "\t" + str(len(train_data) - correct)
+			print ("%s\t%s\t%s\t%s" % (str(i + 1), str(err), str(correct), str(len(train_data) - correct) ) )
 
 		correct = 0
 		for instance in test_data:
 			tmp_activation, tmp_predict, tmp_actual = train_direct_link(instance, w1, 2)
 			correct += (tmp_predict == tmp_actual)
-			print str("{0:.6f}".format(tmp_activation)) + "\t" + str(tmp_predict) + "\t" + str(tmp_actual) 
-		print str(correct) + "\t" + str(len(test_data) - correct)
+			# print str("{0:.6f}".format(tmp_activation)) + "\t" + str(tmp_predict) + "\t" + str(tmp_actual) 
+			print ("%s\t%s\t%s" % (str(tmp_activation) , str(tmp_predict) , str(tmp_actual) ) )
+		print ("%s\t%s" % (str(correct) , str(len(test_data) - correct)))
 
 		
 	else:
@@ -307,15 +309,17 @@ def main():
 				tmp_err, tmp_correct = train(instance, w1, w2, 1)
 				err += tmp_err
 				correct += tmp_correct
-			print str(i + 1) + "\t" + str("{0:.6f}".format(err)) + "\t" + str(correct) + "\t" + str(len(train_data) - correct)
+			# print str(i + 1) + "\t" + str("{0:.6f}".format(err)) + "\t" + str(correct) + "\t" + str(len(train_data) - correct)
+			print ("%s\t%s\t%s\t%s" % (str(i + 1), str(err), str(correct), str(len(train_data) - correct) ) )
 
 
 		correct = 0
 		for instance in test_data:
 			tmp_activation, tmp_predict, tmp_actual = train(instance, w1, w2, 2)
 			correct += (tmp_predict == tmp_actual)
-			print str("{0:.6f}".format(tmp_activation)) + "\t" + str(tmp_predict) + "\t" + str(tmp_actual) 
-		print str(correct) + "\t" + str(len(test_data) - correct)
+			# print str("{0:.6f}".format(tmp_activation)) + "\t" + str(tmp_predict) + "\t" + str(tmp_actual) 
+			print ("%s\t%s\t%s" % (str(tmp_activation) , str(tmp_predict) , str(tmp_actual) ) )
+		print ("%s\t%s" % (str(correct) , str(len(test_data) - correct)))
 
 
 

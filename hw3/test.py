@@ -11,7 +11,7 @@ index2feature = [] #index to feature index
 class2index = {} 
 index2class = [] # index to class 0 or 1
 isNominal = {} #name to true or false
-TEST = 1
+TEST = 0
 feature_num = 0
 each_feature_value_num = {}
 feature_values = {} #possible value in each feature
@@ -82,26 +82,18 @@ def train(instance, w1, w2, isPredict):
 	delta_cross_entropy = (output_out - label)
 
 	#if prediction, return, do not modify weight matrix
-	if isPredict == 1:
+	if isPredict:
 		prediction = -1
-		if output_out > 0.5:
+
+		if output_out - 0.5 > 0.00001:
 			prediction = 1
 		else:
 			prediction = 0
 		# return prediction
 		if prediction == label:
-			return cross_entropy, 1
+			return 1
 		else:
-			return cross_entropy, 0
-
-	elif isPredict == 2:
-		prediction = -1
-		if output_out > 0.5:
-			prediction = 1
-		else:
-			prediction = 0
-		# return prediction
-		return output_out, prediction, label
+			return 0
 
 	#back propagation
 	delta_hidden = [0.0 for i in range(h + 1)]
@@ -159,26 +151,17 @@ def train_direct_link(instance, w1, isPredict):
 	delta_cross_entropy = (output_out - label)
 
 
-	if isPredict == 1:
+	if isPredict:
 		prediction = -1
-		if output_out > 0.5:
+		if output_out - 0.5 > 0.00001:
 			prediction = 1
 		else:
 			prediction = 0
 		# return prediction
 		if prediction == label:
-			return cross_entropy, 1
+			return 1
 		else:
-			return cross_entropy, 0
-
-	elif isPredict == 2:
-		prediction = -1
-		if output_out > 0.5:
-			prediction = 1
-		else:
-			prediction = 0
-		# return prediction
-		return output_out, prediction, label
+			return 0
 
 	#back propagation
 	for i in range(input_unit_num + 1):
@@ -190,7 +173,7 @@ def train_direct_link(instance, w1, isPredict):
 def main():
 	global feature2index, index2feature, isNominal, feature_values, feature_num, input_unit_num
 	global l, h , e
-	l = 0.1
+	l = 0.0001
 	h = 10
 	e = 50
 	train_file = "heart_train.arff"
@@ -210,7 +193,6 @@ def main():
 
 	#first shuffle the mat
 	np.random.shuffle(train_data)
-	np.random.shuffle(test_data)
 	
 
 	i = 0
@@ -242,6 +224,7 @@ def main():
 			ave = mysum / (len(train_data) + 0.0)
 			square_error = 0
 			tmp = 0
+			print ave
 			for j in range(len(train_data)):
 				tmp = train_data[j][i] - ave
 				square_error += tmp * tmp
@@ -249,13 +232,26 @@ def main():
 			abs_error = math.sqrt(square_error)
 			for j in range(len(train_data)):
 				train_data[j][i] = (column_vec[j] - ave) / abs_error
+
+
+	for i in range(feature_num):
+		if not isNominal[index2feature[i]]:
+			column_vec = [0 for j in range(len(test_data))]
 			for j in range(len(test_data)):
-				test_data[j][i] = (test_data[j][i] - ave) / abs_error
+				column_vec[j] = test_data[j][i] 
+			mysum = sum(column_vec)
+			ave = mysum / (len(test_data) + 0.0)
+			square_error = 0
+			tmp = 0
+			for j in range(len(test_data)):
+				tmp = test_data[j][i] - ave
+				square_error += tmp * tmp
+			square_error /= (len(test_data) + 0.0)
+			abs_error = math.sqrt(square_error)
+			for j in range(len(test_data)):
+				test_data[j][i] = (column_vec[j] - ave) / abs_error
 
-
-	# for i in range(feature_num):
-	# 	if not isNominal[index2feature[i]]:
-
+	print train_data
 
 	#calculate the input vector length based on the possible value of each feature
 	for ele in each_feature_value_num:
@@ -270,24 +266,19 @@ def main():
 		w1 = [myrand() for i in range(input_unit_num + 1)]
 		for i in range(e):
 			error = 0
-			err = 0
-			correct = 0
 			for instance in train_data:
-				train_direct_link(instance, w1, 0)
-			for instance in train_data:
-				tmp_err, tmp_correct = train_direct_link (instance, w1, 1)
-				err += tmp_err
-				correct += tmp_correct
-			print str(i + 1) + "\t" + str("{0:.6f}".format(err)) + "\t" + str(correct) + "\t" + str(len(train_data) - correct)
+				error += train_direct_link(instance, w1, 0)
+			print error
 
 		correct = 0
-		for instance in test_data:
-			tmp_activation, tmp_predict, tmp_actual = train_direct_link(instance, w1, 2)
-			correct += (tmp_predict == tmp_actual)
-			print str("{0:.6f}".format(tmp_activation)) + "\t" + str(tmp_predict) + "\t" + str(tmp_actual) 
-		print str(correct) + "\t" + str(len(test_data) - correct)
+		for instance in train_data:
+			correct += train_direct_link(instance, w1, 1)
+		print correct
+		correct = 0
 
-		
+		for instance in test_data:
+			correct += train_direct_link(instance, w1, 1)
+			# print "actual: ", str(class2index[instance[feature_num]]), "  prediction : ", str(correct)
 	else:
 		#has hidden layer
 		w1 = [[myrand() for i in range(h)] for i in range(input_unit_num + 1)]
@@ -298,26 +289,21 @@ def main():
 
 		for i in range(e):
 			cross_entropy_error = 0
-			err = 0
-			correct = 0
 			for instance in train_data:
-				train(instance, w1, w2, 0)
-
-			for instance in train_data:
-				tmp_err, tmp_correct = train(instance, w1, w2, 1)
-				err += tmp_err
-				correct += tmp_correct
-			print str(i + 1) + "\t" + str("{0:.6f}".format(err)) + "\t" + str(correct) + "\t" + str(len(train_data) - correct)
-
+				cross_entropy_error += train(instance, w1, w2, 0)
+			print cross_entropy_error
 
 		correct = 0
+		for instance in train_data:
+			correct += train(instance, w1, w2, 1)
+		print correct
+		correct = 0
 		for instance in test_data:
-			tmp_activation, tmp_predict, tmp_actual = train(instance, w1, w2, 2)
-			correct += (tmp_predict == tmp_actual)
-			print str("{0:.6f}".format(tmp_activation)) + "\t" + str(tmp_predict) + "\t" + str(tmp_actual) 
-		print str(correct) + "\t" + str(len(test_data) - correct)
+			correct += train(instance, w1, w2, 1)
+			# print "actual: ", str(class2index[instance[feature_num]]), "  prediction : ", str(correct)
+	
 
-
+	print correct, len(test_data) - correct
 
 
 
